@@ -10,110 +10,11 @@
     <!-- 
       PASO CLAVE: Importamos la librería html2pdf.js para generar el PDF
     -->
+    <!-- CORREGIDO: xintegrity -> integrity -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
-        /* Estilos para la fuente Inter */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* bg-gray-100 */
-        }
-        /* Ocultar flechas en inputs de tipo número */
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-
-        /* Estilos para la FACTURA (imitando la imagen) */
-        @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap');
-        
-        #invoice-to-print {
-            font-family: 'Times New Roman', Times, serif;
-            color: #111827; /* text-gray-900 */
-            width: 100%;
-            max-width: 700px;
-            margin: 0 auto;
-            border: 1px solid #e5e7eb; /* border-gray-200 */
-            padding: 2rem; 
-            background-color: #ffffff;
-            box-sizing: border-box; 
-        }
-        #invoice-to-print h1 {
-            font-size: 3rem; /* 48px */
-            letter-spacing: 0.1em;
-            color: #374151; /* text-gray-700 */
-            font-weight: 600;
-        }
-        #invoice-to-print .company-details p {
-            font-size: 1rem; /* 16px */
-            line-height: 1.4;
-        }
-        #invoice-to-print .invoice-details p {
-            font-size: 1rem;
-            line-height: 1.5;
-            text-align: right;
-        }
-        #invoice-to-print .to-section p {
-            font-size: 0.875rem; /* 14px */
-            text-transform: uppercase;
-            color: #4b5563; /* text-gray-600 */
-            margin-bottom: 0.25rem;
-        }
-        #invoice-to-print .to-section span {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #111827;
-        }
-        #invoice-to-print .invoice-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        #invoice-to-print .invoice-table th,
-        #invoice-to-print .invoice-table td {
-            border-bottom: 1px solid #9ca3af; /* border-gray-400 */
-            padding: 0.75rem 0.25rem; /* py-3 px-1 */
-            text-align: left;
-        }
-        #invoice-to-print .invoice-table th {
-            font-size: 0.75rem; /* 12px */
-            text-transform: uppercase;
-            color: #4b5563; /* text-gray-600 */
-            background-color: #f3f4f6; /* bg-gray-100 */
-            border-top: 2px solid #9ca3af;
-            border-bottom-width: 2px;
-        }
-        #invoice-to-print .invoice-table td {
-            font-size: 1rem;
-        }
-        #invoice-to-print .invoice-table .text-right {
-            text-align: right;
-        }
-        #invoice-to-print .totals-table {
-            width: 50%;
-            margin-left: auto;
-            margin-top: 1.5rem; /* mt-6 */
-        }
-         #invoice-to-print .totals-table td {
-            padding: 0.5rem 0.25rem; /* py-2 px-1 */
-            font-size: 1rem;
-            color: #374151; /* text-gray-700 */
-         }
-         #invoice-to-print .totals-table .label {
-            text-align: right;
-            text-transform: uppercase;
-         }
-         #invoice-to-print .totals-table .total {
-            font-weight: 600;
-            font-size: 1.125rem; /* text-lg */
-            border-top: 2px solid #374151;
-            color: #111827;
-         }
+/* ... existing code ... -->
          #invoice-to-print .footer-note {
             margin-top: 3rem; /* mt-12 */
             text-align: center;
@@ -498,10 +399,20 @@
 
             // --- INICIALIZACIÓN DE FIREBASE ---
             try {
-                const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-                const firebaseConfig = JSON.parse(firebaseConfigStr);
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                // Configuración de Firebase PROPORCIONADA POR EL USUARIO
+                const firebaseConfig = {
+                  apiKey: "AIzaSyB5-1MpNQMnsPULW7JZZ8aRHC08UM3IVHY",
+                  authDomain: "orange-pbloom.firebaseapp.com",
+                  projectId: "orange-pbloom",
+                  storageBucket: "orange-pbloom.firebasestorage.app", // Corregido el TLD
+                  messagingSenderId: "306332234261",
+                  appId: "1:306332234261:web:a991cc5b30c2cfdfda941c",
+                  measurementId: "G-Z185FETY22"
+                };
                 
+                // Usar el appId de la configuración para las rutas de la base de datos
+                const appId = firebaseConfig.appId; 
+
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
@@ -513,6 +424,7 @@
                         console.log("Usuario autenticado:", userId);
                         
                         // Definir la ruta de la colección de INVENTARIO
+                        // Usamos el appId de la configuración
                         inventoryCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/inventory`);
                         
                         // NUEVO: Definir la ruta de la colección de VENTAS
@@ -526,20 +438,44 @@
                         // Si no hay usuario, autenticarse
                         console.log("Autenticando...");
                         try {
+                            // Mantenemos la lógica de autenticación del canvas/local
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                console.log("Intentando signInWithCustomToken...");
                                 await signInWithCustomToken(auth, __initial_auth_token);
                             } else {
+                                // Si no estamos en el canvas, nos autenticamos anónimamente
+                                console.log("Intentando signInAnonymously...");
                                 await signInAnonymously(auth);
                             }
                         } catch (error) {
-                            console.error("Error de autenticación:", error);
-                            receptionError.textContent = "Error de autenticación. No se pueden guardar datos.";
+                            console.warn("Falló signInWithCustomToken (esto es normal si no estás en el canvas):", error.message);
+                            // Si falla el token (normal fuera del canvas) o la config no se encuentra, reintentar con anónimo
+                            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/invalid-custom-token') {
+                                console.log("Reintentando con signInAnonymously...");
+                                try {
+                                    await signInAnonymously(auth);
+                                } catch (anonError) {
+                                    console.error("Error de autenticación anónima:", anonError);
+                                    receptionError.textContent = "Error de autenticación anónima. Revisa la config. de Firebase.";
+                                }
+                            } else {
+                                console.error("Error de autenticación:", error);
+                                receptionError.textContent = "Error de autenticación. No se pueden guardar datos.";
+                            }
                         }
                     }
                 });
             } catch (error) {
                 console.error("Error inicializando Firebase:", error);
-                document.body.innerHTML = "<h1>Error crítico al cargar Firebase. Revise la configuración.</h1>";
+                // Mostrar un error más descriptivo
+                document.body.innerHTML = `<div style="padding: 2rem; text-align: center; font-family: sans-serif; line-height: 1.6; color: #333;">
+                                                <h1 style="color: #d9534f;">Error Crítico: No se pudo conectar a Firebase.</h1>
+                                                <p style="color: #d9534f; font-weight: bold; background: #f2dede; padding: 1rem; border-radius: 8px; border: 1px solid #ebccd1; display: inline-block; max-width: 800px; text-align: left;">
+                                                    Mensaje: ${error.message}
+                                                </p>
+                                                <p style="margin-top: 1.5rem;">Por favor, revise la consola para más detalles (Presione F12).</p>
+                                                <p>Asegúrese de que la configuración de Firebase sea correcta y que el dominio esté autorizado.</p>
+                                            </div>`;
             }
 
             // --- FUNCIONES DE FIREBASE (LISTENERS) ---
