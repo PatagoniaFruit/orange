@@ -9,7 +9,6 @@
     
     <!-- 
       PASO CLAVE: Importamos la librería html2pdf.js para generar el PDF
-      https://github.com/eKoopmans/html2pdf.js
     -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
@@ -37,12 +36,12 @@
             font-family: 'Times New Roman', Times, serif;
             color: #111827; /* text-gray-900 */
             width: 100%;
-            max-width: 700px;/* <-- AJUSTE AQUÍ (de 800px a 700px) */
+            max-width: 700px;
             margin: 0 auto;
             border: 1px solid #e5e7eb; /* border-gray-200 */
-            padding: 2rem; /* <-- AJUSTE AQUÍ (de 2.5rem a 2rem) */
+            padding: 2rem; 
             background-color: #ffffff;
-            box-sizing: border-box; /* <-- AJUSTE AQUÍ (añadido por seguridad) */
+            box-sizing: border-box; 
         }
         #invoice-to-print h1 {
             font-size: 3rem; /* 48px */
@@ -137,7 +136,6 @@
             <h2 class="text-2xl font-semibold mb-6 border-b pb-3">1. Registrar Recepción de Materia Prima</h2>
             
             <form id="reception-form" class="space-y-6">
-                <!-- (El formulario de recepción es el mismo que antes) -->
                  <fieldset>
                     <legend class="text-lg font-medium text-gray-700 mb-2">Datos de Trazabilidad</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -163,7 +161,7 @@
                             <input type="text" id="species" value="Naranjas" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50" readonly>
                         </div>
                         <div>
-                            <label for="variety" class="block text-sm font-medium text-gray-700">Variedad</ábel>
+                            <label for="variety" class="block text-sm font-medium text-gray-700">Variedad</label>
                             <input type="text" id="variety" placeholder="Ej: Navel, Valencia" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                          <div>
@@ -172,6 +170,7 @@
                         </div>
                     </div>
                 </fieldset>
+                <div id="reception-error" class="text-red-600 text-sm mt-2"></div>
                 <div class="text-right">
                     <button type="submit" id="add-reception-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Registrar en Inventario
@@ -180,8 +179,15 @@
             </form>
         </section>
 
+        <!-- Botón para Nueva Venta -->
+        <div class="flex justify-end mb-4">
+            <button id="new-sale-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-lg font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                + Crear Nueva Venta
+            </button>
+        </div>
+
         <!-- Sección 2: Inventario de Materia Prima (Cámara) -->
-        <section id="inventory-container" class="bg-white p-6 rounded-lg shadow-md">
+        <section id="inventory-container" class="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 class="text-2xl font-semibold mb-6 border-b pb-3">2. Inventario en Cámara (Materia Prima)</h2>
             
             <div class="overflow-x-auto">
@@ -192,13 +198,40 @@
                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productor</th>
                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock (Kg)</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock (Kg)</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body" class="bg-white divide-y divide-gray-200">
-                        <tr id="empty-row">
-                            <td colspan="6" class="px-4 py-4 text-sm text-gray-500 text-center">No hay materia prima en inventario.</td>
+                        <tr id="empty-inventory-row">
+                            <td colspan="5" class="px-4 py-4 text-sm text-gray-500 text-center">No hay materia prima en inventario.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- NUEVO: Sección 3: Resumen de Ventas -->
+        <section id="sales-container" class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-6 border-b pb-3">
+                <h2 class="text-2xl font-semibold">3. Resumen de Ventas</h2>
+                <button id="download-excel-btn" class="inline-flex justify-center py-2 px-4 border border-green-600 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Descargar Excel (.csv)
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table id="sales-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-body" class="bg-white divide-y divide-gray-200">
+                        <tr id="empty-sales-row">
+                            <td colspan="4" class="px-4 py-4 text-sm text-gray-500 text-center">No hay ventas registradas.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -208,21 +241,19 @@
 
     <!-- Modal 1: Formulario de Venta (Para ingresar datos de la factura) -->
     <div id="sell-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <form id="sell-form">
-                <div class="p-6">
-                    <h3 class="text-2xl font-semibold mb-4">Generar Venta</h3>
-                    <p class="mb-6">Lote de origen: <strong id="sell-lot-info" class="text-blue-600"></strong></p>
+                <div class="p-6 space-y-6">
+                    <h3 class="text-2xl font-semibold">Generar Nueva Venta</h3>
                     
-                    <input type="hidden" id="sell-lot-id">
-                    
-                    <div class="space-y-4">
-                        <h4 class="text-lg font-medium text-gray-700 border-b pb-2">Datos del Cliente y Factura</h4>
-                        <div>
-                            <label for="sell-customer" class="block text-sm font-medium text-gray-700">Cliente (TO:) *</label>
-                            <input type="text" id="sell-customer" placeholder="Ej: Jacmor Farms" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
+                    <!-- Datos Cliente y Factura -->
+                    <fieldset class="border rounded-md p-4">
+                        <legend class="text-lg font-medium text-gray-700 px-2">Datos del Cliente y Factura</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="sell-customer" class="block text-sm font-medium text-gray-700">Cliente (TO:) *</label>
+                                <input type="text" id="sell-customer" placeholder="Ej: Jacmor Farms" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                            </div>
                             <div>
                                 <label for="sell-invoice-num" class="block text-sm font-medium text-gray-700">Invoice # *</label>
                                 <input type="text" id="sell-invoice-num" placeholder="Ej: 1001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
@@ -232,32 +263,85 @@
                                 <input type="date" id="sell-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
                             </div>
                         </div>
+                    </fieldset>
 
-                        <h4 class="text-lg font-medium text-gray-700 border-b pb-2 pt-4">Detalle del Producto (Venta)</h4>
-                        
-                        <div>
-                            <label for="sell-description" class="block text-sm font-medium text-gray-700">Descripción (Cajas) *</label>
-                            <input type="text" id="sell-description" placeholder="Ej: 2 lb Clams" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="sell-qty" class="block text-sm font-medium text-gray-700">Cantidad (QTY) *</label>
-                                <input type="number" id="sell-qty" min="0" placeholder="Ej: 250" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                    <!-- Añadir Líneas de Factura (Múltiples) -->
+                    <fieldset class="border rounded-md p-4">
+                        <legend class="text-lg font-medium text-gray-700 px-2">Añadir Líneas de Factura</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                            <div class="md:col-span-3">
+                                <label for="new-line-desc" class="block text-sm font-medium text-gray-700">Descripción (Cajas)</label>
+                                <input type="text" id="new-line-desc" placeholder="Ej: 2 lb Clams" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                             </div>
                             <div>
-                                <label for="sell-unit-price" class="block text-sm font-medium text-gray-700">Precio Unitario ($) *</label>
-                                <input type="number" id="sell-unit-price" min="0" step="0.01" placeholder="Ej: 4.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                                <label for="new-line-qty" class="block text-sm font-medium text-gray-700">Cantidad (QTY)</label>
+                                <input type="number" id="new-line-qty" min="0" placeholder="Ej: 250" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label for="new-line-price" class="block text-sm font-medium text-gray-700">Precio Unitario ($)</label>
+                                <input type="number" id="new-line-price" min="0" step="0.01" placeholder="Ej: 4.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <button type="button" id="add-invoice-line-btn" class="w-full py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">Añadir</button>
                             </div>
                         </div>
+                        <div id="line-item-error" class="text-red-600 text-sm mt-2"></div>
                         
-                        <h4 class="text-lg font-medium text-gray-700 border-b pb-2 pt-4">Control de Inventario (Interno)</h4>
-                        <div>
-                            <label for="sell-kg-discount" class="block text-sm font-medium text-gray-700">Kg a descontar del Lote *</label>
-                            <input type="number" id="sell-kg-discount" min="0" step="0.01" placeholder="Kg de materia prima usados" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                        <!-- Tabla de líneas añadidas -->
+                        <h4 class="text-base font-medium text-gray-700 mt-4 mb-2">Líneas en esta Factura</h4>
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 text-xs uppercase">
+                                <tr>
+                                    <th class="px-2 py-2">Descripción</th>
+                                    <th class="px-2 py-2">Qty</th>
+                                    <th class="px-2 py-2">P. Unitario</th>
+                                    <th class="px-2 py-2">Total</th>
+                                    <th class="px-2 py-2">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sell-items-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Las líneas se añadirán aquí -->
+                            </tbody>
+                        </table>
+                    </fieldset>
+                    
+                    <!-- Descuento de Inventario (Múltiples Lotes) -->
+                    <fieldset class="border rounded-md p-4">
+                        <legend class="text-lg font-medium text-gray-700 px-2">Descuento de Inventario (Multi-Lote)</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                            <div class="md:col-span-3">
+                                <label for="discount-lot-select" class="block text-sm font-medium text-gray-700">Lote de Origen</label>
+                                <select id="discount-lot-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
+                            </div>
+                            <div>
+                                <label for="discount-kg" class="block text-sm font-medium text-gray-700">Kg a Descontar</label>
+                                <input type="number" id="discount-kg" min="0" step="0.01" placeholder="0.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <button type="button" id="add-discount-btn" class="w-full py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">Añadir</button>
+                            </div>
                         </div>
+                        <div id="discount-error" class="text-red-600 text-sm mt-2"></div>
 
-                    </div>
+                        <!-- Tabla de descuentos añadidos -->
+                        <h4 class="text-base font-medium text-gray-700 mt-4 mb-2">Lotes a Descontar en esta Venta</h4>
+                        <table class="min-w-full divide-y divide-gray-200">
+                             <thead class="bg-gray-50 text-xs uppercase">
+                                <tr>
+                                    <th class="px-2 py-2">Lote ID</th>
+                                    <th class="px-2 py-2">Productor</th>
+                                    <th class="px-2 py-2">Kg a Descontar</th>
+                                    <th class="px-2 py-2">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sell-discounts-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Los descuentos de lote se añadirán aquí -->
+                            </tbody>
+                        </table>
+                    </fieldset>
+                    
+                    <div id="sell-form-error" class="text-red-600 text-center font-medium"></div>
+
                 </div>
                 <!-- Botones del Modal -->
                 <div class="bg-gray-100 px-6 py-4 flex justify-end space-x-3 border-t">
@@ -276,20 +360,15 @@
     <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-gray-100 rounded-lg shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto">
             
-            <!-- Contenedor del PDF (Lo que se va a imprimir) -->
-            <!-- Esta es la réplica exacta de la imagen "Pinebloom Farms" -->
             <div id="invoice-to-print" class="bg-white p-10">
                 <header class="flex justify-between items-start mb-10">
-                    <!-- Datos de la Empresa (Vendedor) -->
                     <div class="company-details">
-                        <!-- <img src="URL_DE_TU_LOGO" alt="Pinebloom Farms Logo" class="h-16 mb-4"> -->
                         <p class="font-bold text-lg">PINEBLOOM FARMS LLC</p>
                         <p>545 Tarva Road</p>
                         <p>Albany, Geogia 31721</p>
                         <p>1-229-734-5611</p>
                         <p>pinebloompackingllc@gmail.com</p>
                     </div>
-                    <!-- Título y Datos Factura -->
                     <div class="invoice-details">
                         <h1 class="mb-4">INVOICE</h1>
                         <p><strong>DATE</strong> <span id="inv-date">10/25/2024</span></p>
@@ -297,13 +376,11 @@
                     </div>
                 </header>
 
-                <!-- Datos del Cliente -->
                 <section class="to-section mb-6">
                     <p>TO</p>
                     <span id="inv-customer">Jacmor Farms</span>
                 </section>
 
-                <!-- Términos de Pago -->
                 <table class="invoice-table">
                     <thead>
                         <tr>
@@ -319,7 +396,6 @@
                     </tbody>
                 </table>
 
-                <!-- Líneas de la Factura -->
                 <table class="invoice-table" style="margin-top: 2rem;">
                     <thead>
                         <tr>
@@ -330,24 +406,16 @@
                         </tr>
                     </thead>
                     <tbody id="inv-items-body">
-                        <!-- Las filas se insertarán aquí. Ejemplo:
-                        <tr>
-                            <td>250</td>
-                            <td>2 lb Clams</td>
-                            <td class="text-right">$4.00</td>
-                            <td class="text-right">$1000.00</td>
-                        </tr>
-                        -->
+                        <!-- Las filas se insertarán aquí -->
                     </tbody>
                 </table>
                 
-                <!-- Totales -->
                 <section class="totals-section">
                     <table class="totals-table">
                         <tbody>
                             <tr>
                                 <td class="label">SUBTOTAL</td>
-                                <td class="text-right" id="inv-subtotal">$1000.00</td>
+                                <td class="text-right" id="inv-subtotal">$0.00</td>
                             </tr>
                             <tr>
                                 <td class="label">SALES TAX</td>
@@ -355,13 +423,12 @@
                             </tr>
                             <tr>
                                 <td class="label total">TOTAL</td>
-                                <td class="text-right" id="inv-total">$1000.00</td>
+                                <td class="text-right" id="inv-total">$0.00</td>
                             </tr>
                         </tbody>
                     </table>
                 </section>
 
-                <!-- Nota al pie -->
                 <footer class="footer-note">
                     <p>Make all checks payable to Pinebloom Farms LLC</p>
                 </footer>
@@ -380,171 +447,417 @@
     </div>
 
 
-    <script>
+    <!-- SDKs de Firebase -->
+    <script type="module">
+        // Importar funciones de Firebase
+        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, updateDoc, onSnapshot, collection, query, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- VARIABLES GLOBALES DE FIREBASE ---
+            let db, auth, userId, inventoryCollectionRef, salesCollectionRef; // NUEVO: salesCollectionRef
+            let localInventory = []; // Caché local del inventario para validaciones
+            let localSales = []; // NUEVO: Caché local de ventas para Excel
 
             // --- SELECTORES DE ELEMENTOS ---
             const receptionForm = document.getElementById('reception-form');
+            const receptionError = document.getElementById('reception-error');
             const inventoryBody = document.getElementById('inventory-body');
-            const emptyRow = document.getElementById('empty-row');
+            const emptyInventoryRow = document.getElementById('empty-inventory-row');
             
+            const newSaleBtn = document.getElementById('new-sale-btn');
+
             // Modal de Venta (Formulario)
             const sellModal = document.getElementById('sell-modal');
             const sellForm = document.getElementById('sell-form');
-            const sellLotInfo = document.getElementById('sell-lot-info');
-            const sellLotIdInput = document.getElementById('sell-lot-id');
+            const sellFormError = document.getElementById('sell-form-error');
+
+            const addInvoiceLineBtn = document.getElementById('add-invoice-line-btn');
+            const sellItemsBody = document.getElementById('sell-items-body');
+            const lineItemError = document.getElementById('line-item-error');
+
+            const addDiscountBtn = document.getElementById('add-discount-btn');
+            const discountLotSelect = document.getElementById('discount-lot-select');
+            const sellDiscountsBody = document.getElementById('sell-discounts-body');
+            const discountError = document.getElementById('discount-error');
 
             // Modal de Factura (PDF Preview)
             const invoiceModal = document.getElementById('invoice-modal');
             const downloadPdfBtn = document.getElementById('download-pdf-btn');
 
-            // Botones de cerrar modal (comparten la clase)
+            // Botones de cerrar modal
             const closeModalBtns = document.querySelectorAll('.close-modal-btn');
 
-            // --- ESTADO (Base de Datos en Memoria) ---
-            let inventory = [];
-            let receptionCounter = 0; // Para Lote IDs únicos
+            // NUEVO: Selectores de Resumen de Ventas
+            const salesBody = document.getElementById('sales-body');
+            const emptySalesRow = document.getElementById('empty-sales-row');
+            const downloadExcelBtn = document.getElementById('download-excel-btn');
 
-            // --- FUNCIONES ---
+
+            // --- INICIALIZACIÓN DE FIREBASE ---
+            try {
+                const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+                const firebaseConfig = JSON.parse(firebaseConfigStr);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug'); // Útil para desarrollo
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Usuario autenticado:", userId);
+                        
+                        // Definir la ruta de la colección de INVENTARIO
+                        inventoryCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/inventory`);
+                        
+                        // NUEVO: Definir la ruta de la colección de VENTAS
+                        salesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/sales`);
+                        
+                        // Iniciar los listeners
+                        setupInventoryListener();
+                        setupSalesListener(); // NUEVO
+
+                    } else {
+                        // Si no hay usuario, autenticarse
+                        console.log("Autenticando...");
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("Error de autenticación:", error);
+                            receptionError.textContent = "Error de autenticación. No se pueden guardar datos.";
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error inicializando Firebase:", error);
+                document.body.innerHTML = "<h1>Error crítico al cargar Firebase. Revise la configuración.</h1>";
+            }
+
+            // --- FUNCIONES DE FIREBASE (LISTENERS) ---
 
             /**
-             * Formatea un número a moneda (Ej: $4.00)
+             * Escucha cambios en el inventario en tiempo real
              */
+            function setupInventoryListener() {
+                if (!inventoryCollectionRef) return;
+                
+                const q = query(inventoryCollectionRef); 
+
+                onSnapshot(q, (snapshot) => {
+                    localInventory = []; // Resetear caché
+                    const inventoryDocs = [];
+                    snapshot.forEach((doc) => {
+                        const lot = { ...doc.data(), id: doc.id };
+                        inventoryDocs.push(lot);
+                        // Añadir solo lotes con stock al caché para ventas
+                        if (lot.netWeight > 0) {
+                            localInventory.push(lot);
+                        }
+                    });
+                    renderInventory(inventoryDocs); // Actualizar tabla principal
+                    populateLotSelect(); // Actualizar dropdown en modal de venta
+                }, (error) => {
+                    console.error("Error al escuchar inventario:", error);
+                });
+            }
+
+            /**
+             * NUEVO: Escucha cambios en las ventas en tiempo real
+             */
+            function setupSalesListener() {
+                if (!salesCollectionRef) return;
+
+                const q = query(salesCollectionRef);
+
+                onSnapshot(q, (snapshot) => {
+                    localSales = []; // Resetear caché de ventas
+                    snapshot.forEach((doc) => {
+                        localSales.push({ ...doc.data(), id: doc.id });
+                    });
+                    renderSalesSummary(localSales); // Actualizar tabla de resumen de ventas
+                }, (error) => {
+                    console.error("Error al escuchar ventas:", error);
+                });
+            }
+
+            // --- FUNCIONES DE UTILIDAD ---
             const formatCurrency = (value) => {
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD'
-                    // Cambia 'en-US' y 'USD' por 'es-CL' y 'CLP' si prefieres pesos chilenos
-                }).format(value);
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
             };
 
-            /**
-             * Formatea un número simple (Ej: 1,000)
-             */
             const formatNumber = (value) => {
                  return new Intl.NumberFormat('es-CL').format(value);
             };
             
             /**
-             * Formatea una fecha de YYYY-MM-DD a MM/DD/YYYY (formato USA de la factura)
+             * Formatea fecha (objeto Date o string YYYY-MM-DD o Timestamp) a MM/DD/YYYY
              */
-            const formatDate = (dateString) => {
-                if (!dateString) return '';
-                const [year, month, day] = dateString.split('-');
+            const formatDate = (dateInput) => {
+                if (!dateInput) return '';
+                
+                let date;
+                if (dateInput.toDate) { // Es un Timestamp de Firebase
+                    date = dateInput.toDate();
+                } else if (typeof dateInput === 'string') { // Es un string YYYY-MM-DD
+                    const parts = dateInput.split('-');
+                    if (parts.length === 3) {
+                         date = new Date(parts[0], parts[1] - 1, parts[2]);
+                    } else {
+                        return dateInput; // Devolver el string si no es el formato esperado
+                    }
+                } else if (dateInput instanceof Date) { // Ya es un objeto Date
+                    date = dateInput;
+                } else {
+                    return '';
+                }
+
+                // Usar UTC para evitar problemas de zona horaria con las fechas de Firebase
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const year = date.getUTCFullYear();
                 return `${month}/${day}/${year}`;
             };
 
 
+            // --- FUNCIONES DE RENDERIZADO ---
+
             /**
              * Actualiza la tabla del inventario en el HTML
              */
-            const renderInventory = () => {
-                // Limpiar tabla
-                inventoryBody.innerHTML = '';
+            const renderInventory = (inventoryDocs) => {
+                inventoryBody.innerHTML = ''; // Limpiar tabla
 
-                if (inventory.length === 0) {
-                    inventoryBody.appendChild(emptyRow);
+                const activeLots = inventoryDocs.filter(lot => lot.netWeight > 0);
+
+                if (activeLots.length === 0) {
+                    inventoryBody.appendChild(emptyInventoryRow);
                     return;
                 }
 
-                inventory.forEach(lot => {
-                    // No mostrar lotes con 0 Kg
-                    if (lot.netWeight <= 0) return;
-
+                activeLots.forEach(lot => {
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50';
                     
                     tr.innerHTML = `
-                        <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">LOTE-${lot.id}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">LOTE-${lot.id.substring(0, 6)}...</td>
                         <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${formatDate(lot.receptionDate)}</td>
                         <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${lot.producerName}</td>
                         <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${lot.species} ${lot.variety || ''}</td>
                         <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">${formatNumber(lot.netWeight)} Kg</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            <button data-id="${lot.id}" class="sell-btn text-green-600 hover:text-green-800 font-medium">
-                                Vender / Facturar
-                            </button>
-                        </td>
                     `;
                     inventoryBody.appendChild(tr);
                 });
             };
 
             /**
-             * Muestra el modal de Formulario de Venta
+             * NUEVO: Actualiza la tabla de resumen de ventas
              */
-            const showSellModal = (lotId) => {
-                const lot = inventory.find(item => item.id === lotId);
-                if (!lot) return;
+            const renderSalesSummary = (sales) => {
+                salesBody.innerHTML = ''; // Limpiar tabla
 
-                sellLotInfo.textContent = `LOTE-${lot.id} (${lot.producerName}) - ${formatNumber(lot.netWeight)} Kg disponibles`;
-                sellLotIdInput.value = lot.id;
+                if (sales.length === 0) {
+                    salesBody.appendChild(emptySalesRow);
+                    return;
+                }
                 
-                // Poner fecha de hoy por defecto en el formulario de venta
-                document.getElementById('sell-date').valueAsDate = new Date();
-                
-                sellModal.classList.remove('hidden');
-                sellModal.classList.add('flex');
+                // Ordenar por fecha (más nuevas primero) si 'saleDate' es un Timestamp
+                sales.sort((a, b) => b.saleDate.seconds - a.saleDate.seconds);
+
+                sales.forEach(sale => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">${sale.invoiceNum}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${formatDate(sale.saleDate)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${sale.customerName}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">${formatCurrency(sale.totalAmount)}</td>
+                    `;
+                    salesBody.appendChild(tr);
+                });
             };
 
+
             /**
-             * Oculta cualquier modal abierto
+             * Rellena el <select> de lotes en el modal de venta
              */
+            const populateLotSelect = () => {
+                discountLotSelect.innerHTML = '<option value="">Seleccione un lote</option>';
+                localInventory.forEach(lot => {
+                    const option = document.createElement('option');
+                    option.value = lot.id;
+                    option.textContent = `${lot.producerName} (LOTE-${lot.id.substring(0, 6)}) - ${formatNumber(lot.netWeight)} Kg disp.`;
+                    discountLotSelect.appendChild(option);
+                });
+            };
+
+            // --- FUNCIONES DE MODALES ---
+            const showModal = (modal) => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            };
+
             const hideModals = () => {
                 sellModal.classList.add('hidden');
                 sellModal.classList.remove('flex');
                 invoiceModal.classList.add('hidden');
                 invoiceModal.classList.remove('flex');
             };
+            
+            const openNewSaleModal = () => {
+                sellForm.reset();
+                document.getElementById('sell-date').valueAsDate = new Date();
+                sellItemsBody.innerHTML = '';
+                sellDiscountsBody.innerHTML = '';
+                sellFormError.textContent = '';
+                lineItemError.textContent = '';
+                discountError.textContent = '';
+                showModal(sellModal);
+            };
+
+            // --- LÓGICA DE FORMULARIO DE VENTA (MULTI-LÍNEA / MULTI-LOTE) ---
+
+            /**
+             * Añade una línea de producto a la tabla del modal de venta
+             */
+            const addInvoiceLine = () => {
+                lineItemError.textContent = '';
+                const desc = document.getElementById('new-line-desc').value;
+                const qty = parseFloat(document.getElementById('new-line-qty').value);
+                const price = parseFloat(document.getElementById('new-line-price').value);
+
+                if (!desc || !qty || !price || qty <= 0 || price <= 0) {
+                    lineItemError.textContent = 'Debe rellenar Descripción, Cantidad (>0) y Precio (>0).';
+                    return;
+                }
+                const lineTotal = qty * price;
+
+                const tr = document.createElement('tr');
+                tr.className = 'invoice-line-item';
+                // Guardar datos en el dataset para usarlos al generar la factura
+                tr.dataset.description = desc;
+                tr.dataset.qty = qty;
+                tr.dataset.unitPrice = price;
+                
+                tr.innerHTML = `
+                    <td class="px-2 py-2 text-sm">${desc}</td>
+                    <td class="px-2 py-2 text-sm text-right">${formatNumber(qty)}</td>
+                    <td class="px-2 py-2 text-sm text-right">${formatCurrency(price)}</td>
+                    <td class="px-2 py-2 text-sm text-right">${formatCurrency(lineTotal)}</td>
+                    <td class="px-2 py-2 text-sm text-center">
+                        <button type="button" class="remove-line-btn text-red-600 hover:text-red-800">&times;</button>
+                    </td>
+                `;
+                
+                tr.querySelector('.remove-line-btn').addEventListener('click', () => tr.remove());
+                sellItemsBody.appendChild(tr);
+
+                // Limpiar inputs
+                document.getElementById('new-line-desc').value = '';
+                document.getElementById('new-line-qty').value = '';
+                document.getElementById('new-line-price').value = '';
+            };
+
+            /**
+             * Añade un descuento de lote a la tabla del modal de venta
+             */
+            const addDiscountLine = () => {
+                discountError.textContent = '';
+                const lotId = discountLotSelect.value;
+                const kgDiscount = parseFloat(document.getElementById('discount-kg').value);
+                const selectedLot = localInventory.find(lot => lot.id === lotId);
+
+                if (!selectedLot || !kgDiscount || kgDiscount <= 0) {
+                    discountError.textContent = 'Seleccione un lote e ingrese Kg a descontar (>0).';
+                    return;
+                }
+
+                if (kgDiscount > selectedLot.netWeight) {
+                    discountError.textContent = `Error: No puede descontar ${kgDiscount} Kg. El lote solo tiene ${selectedLot.netWeight} Kg.`;
+                    return;
+                }
+                
+                // Evitar duplicados
+                const existingDiscount = sellDiscountsBody.querySelector(`tr[data-lot-id="${lotId}"]`);
+                if (existingDiscount) {
+                    discountError.textContent = 'Ese lote ya fue añadido. Bórrelo para añadir un nuevo valor.';
+                    return;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = 'discount-line-item';
+                tr.dataset.lotId = lotId;
+                tr.dataset.kg = kgDiscount;
+                tr.dataset.originalWeight = selectedLot.netWeight; // Guardar peso original
+
+                tr.innerHTML = `
+                    <td class="px-2 py-2 text-sm">LOTE-${lotId.substring(0, 6)}...</td>
+                    <td class="px-2 py-2 text-sm">${selectedLot.producerName}</td>
+                    <td class="px-2 py-2 text-sm text-right">${formatNumber(kgDiscount)} Kg</td>
+                    <td class="px-2 py-2 text-sm text-center">
+                        <button type="button" class="remove-line-btn text-red-600 hover:text-red-800">&times;</button>
+                    </td>
+                `;
+                
+                tr.querySelector('.remove-line-btn').addEventListener('click', () => tr.remove());
+                sellDiscountsBody.appendChild(tr);
+
+                // Limpiar inputs
+                discountLotSelect.value = '';
+                document.getElementById('discount-kg').value = '';
+            };
+            
 
             /**
              * Rellena la plantilla de la factura con los datos del formulario
              */
             const populateInvoice = (data) => {
-                const {
-                    customer, invoiceNum, date,
-                    qty, description, unitPrice,
-                    lot
-                } = data;
+                const { customerName, invoiceNum, saleDate, lines } = data;
                 
-                // Cálculos
-                const lineTotal = qty * unitPrice;
-                const subtotal = lineTotal;
-                const salesTax = 0; // La factura de ejemplo no tiene, se puede agregar
-                const total = subtotal + salesTax;
-                
-                // --- Rellenar Factura ---
-                // Encabezado
-                document.getElementById('inv-date').textContent = formatDate(date);
+                // Rellenar cabecera
+                document.getElementById('inv-date').textContent = formatDate(saleDate);
                 document.getElementById('inv-number').textContent = invoiceNum;
-                
-                // Cliente
-                document.getElementById('inv-customer').textContent = customer;
+                document.getElementById('inv-customer').textContent = customerName;
+                document.getElementById('inv-due-date').textContent = formatDate(saleDate);
 
-                // Términos (puedes hacerlos inputs en el formulario si quieres)
-                document.getElementById('inv-terms').textContent = 'Due on receipt';
-                document.getElementById('inv-due-date').textContent = formatDate(date);
-
-                // Líneas de Items
+                // Rellenar líneas
                 const itemsBody = document.getElementById('inv-items-body');
-                itemsBody.innerHTML = `
-                    <tr>
-                        <td class="py-3 px-1">${formatNumber(qty)}</td>
-                        <td class="py-3 px-1">${description}</td>
-                        <td class="py-3 px-1 text-right">${formatCurrency(unitPrice)}</td>
-                        <td class="py-3 px-1 text-right">${formatCurrency(lineTotal)}</td>
-                    </tr>
-                `;
-                // Puedes agregar un bucle aquí si permites múltiples líneas
+                itemsBody.innerHTML = '';
+                let subtotal = 0;
 
-                // Totales
+                lines.forEach(line => {
+                    const qty = parseFloat(line.qty);
+                    const unitPrice = parseFloat(line.unitPrice);
+                    const lineTotal = qty * unitPrice;
+                    subtotal += lineTotal;
+                    
+                    itemsBody.innerHTML += `
+                        <tr>
+                            <td class="py-3 px-1">${formatNumber(qty)}</td>
+                            <td class="py-3 px-1">${line.description}</td>
+                            <td class="py-3 px-1 text-right">${formatCurrency(unitPrice)}</td>
+                            <td class="py-3 px-1 text-right">${formatCurrency(lineTotal)}</td>
+                        </tr>
+                    `;
+                });
+
+                // Rellenar totales
+                const salesTax = 0; // Se puede añadir lógica si es necesario
+                const total = subtotal + salesTax;
                 document.getElementById('inv-subtotal').textContent = formatCurrency(subtotal);
                 document.getElementById('inv-sales-tax').textContent = formatCurrency(salesTax);
                 document.getElementById('inv-total').textContent = formatCurrency(total);
                 
-                // Mostrar modal de factura
-                invoiceModal.classList.remove('hidden');
-                invoiceModal.classList.add('flex');
+                showModal(invoiceModal);
             };
 
             /**
@@ -563,110 +876,211 @@
                     jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
                 };
 
-                // Deshabilitar botón para evitar doble clic
                 downloadPdfBtn.textContent = 'Generando...';
                 downloadPdfBtn.disabled = true;
 
                 html2pdf().from(invoiceElement).set(opt).save().then(() => {
-                    // Una vez guardado, reactivar botón y cerrar
                     downloadPdfBtn.textContent = 'Descargar PDF';
                     downloadPdfBtn.disabled = false;
                     hideModals();
-                    sellForm.reset(); // Limpiar formulario de venta
+                    sellForm.reset();
                 });
             };
+
+            /**
+             * NUEVO: Lógica para descargar el resumen de ventas como CSV
+             */
+            
+            // Función auxiliar para escapar valores para CSV
+            const escapeCSV = (val) => {
+                if (val == null) return '""';
+                let str = String(val);
+                str = str.replace(/"/g, '""'); // Escapar comillas dobles
+                return `"${str}"`; // Envolver en comillas
+            };
+
+            const downloadExcel = () => {
+                if (localSales.length === 0) {
+                    alert('No hay ventas para exportar.');
+                    return;
+                }
+
+                // Encabezados (similares a la imagen de ejemplo)
+                let csvContent = "data:text/csv;charset=utf-8,";
+                const headers = [
+                    "Invoice #",
+                    "Fecha",
+                    "Cliente",
+                    "Packaging (Descripcion)",
+                    "Cantidad (Cajas)",
+                    "Precio Unitario",
+                    "Monto Linea",
+                    "Lotes Descontados (Kg)" // Columna extra para trazabilidad
+                ];
+                csvContent += headers.join(",") + "\r\n";
+
+                // Generar filas (una por CADA LÍNEA de CADA VENTA)
+                localSales.forEach(sale => {
+                    // Combinar los descuentos en un solo string para esta venta
+                    const discountSummary = sale.discounts
+                        .map(d => `LOTE-${d.lotId.substring(0,6)} (${d.kg} Kg)`)
+                        .join('; ');
+
+                    sale.lines.forEach(line => {
+                        const lineTotal = parseFloat(line.qty) * parseFloat(line.unitPrice);
+                        const row = [
+                            escapeCSV(sale.invoiceNum),
+                            escapeCSV(formatDate(sale.saleDate)),
+                            escapeCSV(sale.customerName),
+                            escapeCSV(line.description),
+                            line.qty,
+                            line.unitPrice,
+                            lineTotal.toFixed(2),
+                            escapeCSV(discountSummary) // Añadir el resumen de descuentos en cada línea
+                        ];
+                        csvContent += row.join(",") + "\r\n";
+                    });
+                });
+
+                // Crear y descargar el archivo
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "resumen_ventas.csv");
+                document.body.appendChild(link); 
+                link.click();
+                document.body.removeChild(link);
+            };
+
 
             // --- EVENT LISTENERS ---
 
             // 1. Registrar Recepción (Materia Prima)
-            receptionForm.addEventListener('submit', (e) => {
+            receptionForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                receptionError.textContent = '';
                 
                 const netWeight = parseFloat(document.getElementById('net-weight').value);
                 if (!netWeight || netWeight <= 0) {
-                    alert('El Peso Neto (Kg) debe ser mayor a 0.');
+                    receptionError.textContent = 'El Peso Neto (Kg) debe ser mayor a 0.';
+                    return;
+                }
+                
+                if (!inventoryCollectionRef) {
+                    receptionError.textContent = 'Error: No hay conexión a la base de datos.';
                     return;
                 }
 
-                receptionCounter++;
-
                 const newLot = {
-                    id: receptionCounter,
-                    receptionDate: document.getElementById('reception-date').value,
+                    receptionDate: Timestamp.fromDate(document.getElementById('reception-date').valueAsDate),
                     producerName: document.getElementById('producer-name').value,
                     farmName: document.getElementById('farm-name').value,
                     species: document.getElementById('species').value,
                     variety: document.getElementById('variety').value,
                     netWeight: netWeight,
                 };
-
-                inventory.push(newLot);
-                renderInventory();
-                receptionForm.reset();
-                // Restaurar valores por defecto
-                document.getElementById('species').value = "Naranjas";
-                document.getElementById('reception-date').valueAsDate = new Date();
-            });
-
-            // 2. Clic en "Vender / Facturar" (Botón en la tabla)
-            inventoryBody.addEventListener('click', (e) => {
-                if (e.target.classList.contains('sell-btn')) {
-                    const lotId = parseInt(e.target.dataset.id);
-                    showSellModal(lotId);
+                
+                try {
+                    await addDoc(inventoryCollectionRef, newLot);
+                    receptionForm.reset();
+                    document.getElementById('species').value = "Naranjas";
+                    document.getElementById('reception-date').valueAsDate = new Date();
+                } catch (error) {
+                    console.error("Error al guardar en Firestore:", error);
+                    receptionError.textContent = 'Error al guardar el lote. Intente de nuevo.';
                 }
             });
+            
+            // 2. Abrir modal de nueva venta
+            newSaleBtn.addEventListener('click', openNewSaleModal);
 
-            // 3. Enviar Formulario de Venta (Previsualizar Factura)
-            sellForm.addEventListener('submit', (e) => {
+            // 3. Añadir línea de producto en modal
+            addInvoiceLineBtn.addEventListener('click', addInvoiceLine);
+
+            // 4. Añadir descuento de lote en modal
+            addDiscountBtn.addEventListener('click', addDiscountLine);
+
+            // 5. Enviar Formulario de Venta (Previsualizar Factura)
+            sellForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                sellFormError.textContent = '';
                 
-                // Obtener datos del formulario
-                const lotId = parseInt(sellLotIdInput.value);
-                const kgDiscount = parseFloat(document.getElementById('sell-kg-discount').value);
-                const lot = inventory.find(item => item.id === lotId);
+                // Recolectar líneas y descuentos
+                const invoiceLines = Array.from(sellItemsBody.querySelectorAll('.invoice-line-item')).map(tr => tr.dataset);
+                const discounts = Array.from(sellDiscountsBody.querySelectorAll('.discount-line-item')).map(tr => tr.dataset);
 
-                // Validación de Stock
-                if (!lot || kgDiscount > lot.netWeight) {
-                    alert(`Error: No puedes descontar ${kgDiscount} Kg. El LOTE-${lotId} solo tiene ${lot.netWeight} Kg disponibles.`);
+                // Validaciones
+                if (invoiceLines.length === 0) {
+                    sellFormError.textContent = 'Debe añadir al menos una línea de producto a la factura.';
                     return;
                 }
-                
-                // Si la validación es OK, descontar del inventario
-                lot.netWeight -= kgDiscount;
-                renderInventory(); // Actualizar la tabla de inventario
+                if (discounts.length === 0) {
+                    sellFormError.textContent = 'Debe añadir al menos un descuento de lote del inventario.';
+                    return;
+                }
 
-                // Preparar datos para la factura
-                const invoiceData = {
-                    lot: lot,
-                    customer: document.getElementById('sell-customer').value,
-                    invoiceNum: document.getElementById('sell-invoice-num').value,
-                    date: document.getElementById('sell-date').value,
-                    qty: parseFloat(document.getElementById('sell-qty').value),
-                    description: document.getElementById('sell-description').value,
-                    unitPrice: parseFloat(document.getElementById('sell-unit-price').value),
-                };
+                // Procesar descuentos en BBDD
+                try {
+                    for (const discount of discounts) {
+                        const lotId = discount.lotId;
+                        const kgToDiscount = parseFloat(discount.kg);
+                        
+                        // Doble chequeo por si el stock cambió
+                        const currentLot = localInventory.find(l => l.id === lotId);
+                        if (!currentLot || currentLot.netWeight < kgToDiscount) {
+                             throw new Error(`Stock insuficiente en LOTE-${lotId.substring(0,6)}`);
+                        }
 
-                // Rellenar y mostrar la vista previa de la factura
-                populateInvoice(invoiceData);
-                
-                // Ocultar modal de formulario
-                sellModal.classList.add('hidden');
-                sellModal.classList.remove('flex');
+                        const newWeight = currentLot.netWeight - kgToDiscount;
+                        const docRef = doc(inventoryCollectionRef, lotId);
+                        await updateDoc(docRef, { netWeight: newWeight });
+                    }
+                    
+                    // Preparar datos para la factura Y para guardar la venta
+                    const saleDate = document.getElementById('sell-date').valueAsDate;
+                    const totalAmount = invoiceLines.reduce((acc, line) => {
+                        return acc + (parseFloat(line.qty) * parseFloat(line.unitPrice));
+                    }, 0);
+
+                    const saleRecord = {
+                        customerName: document.getElementById('sell-customer').value,
+                        invoiceNum: document.getElementById('sell-invoice-num').value,
+                        saleDate: Timestamp.fromDate(saleDate), // Guardar como Timestamp
+                        lines: invoiceLines,
+                        discounts: discounts,
+                        totalAmount: totalAmount
+                    };
+
+                    // NUEVO: Guardar el registro de la venta en Firestore
+                    await addDoc(salesCollectionRef, saleRecord);
+
+                    // Preparar datos para el PDF (usa 'saleDate' como objeto Date, no Timestamp)
+                    const invoiceDataForPDF = { ...saleRecord, saleDate: saleDate };
+                    
+                    populateInvoice(invoiceDataForPDF);
+                    hideModals(); // Ocultar modal de venta, mostrar el de factura
+                    showModal(invoiceModal);
+
+                } catch (error) {
+                    console.error("Error al procesar la venta:", error);
+                    sellFormError.textContent = `Error: ${error.message}. La venta no se procesó.`;
+                }
             });
 
-            // 4. Descargar PDF
+            // 6. Descargar PDF
             downloadPdfBtn.addEventListener('click', downloadPDF);
 
-            // 5. Cerrar Modales
+            // 7. NUEVO: Descargar Excel
+            downloadExcelBtn.addEventListener('click', downloadExcel);
+
+            // 8. Cerrar Modales
             closeModalBtns.forEach(btn => {
                 btn.addEventListener('click', hideModals);
             });
             
             // --- INICIALIZACIÓN ---
             document.getElementById('reception-date').valueAsDate = new Date();
-            renderInventory(); // Renderizar la tabla vacía al inicio
         });
     </script>
 </body>
 </html>
-
