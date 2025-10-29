@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Recepción y Venta de Fruta</title>
+    <!-- Incluimos Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 
+      PASO CLAVE: Importamos la librería html2pdf.js para generar el PDF
+      https://github.com/eKoopmans/html2pdf.js
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        /* Estilos para la fuente Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        /* Ocultar flechas en inputs de tipo número */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Estilos para la FACTURA (imitando la imagen) */
+        @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap');
+        
+        #invoice-to-print {
+            font-family: 'Times New Roman', Times, serif;
+            color: #111827; /* text-gray-900 */
+            width: 800px;
+            margin: 0 auto;
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            padding: 2.5rem; /* p-10 */
+            background-color: #ffffff;
+        }
+        #invoice-to-print h1 {
+            font-size: 3rem; /* 48px */
+            letter-spacing: 0.1em;
+            color: #374151; /* text-gray-700 */
+            font-weight: 600;
+        }
+        #invoice-to-print .company-details p {
+            font-size: 1rem; /* 16px */
+            line-height: 1.4;
+        }
+        #invoice-to-print .invoice-details p {
+            font-size: 1rem;
+            line-height: 1.5;
+            text-align: right;
+        }
+        #invoice-to-print .to-section p {
+            font-size: 0.875rem; /* 14px */
+            text-transform: uppercase;
+            color: #4b5563; /* text-gray-600 */
+            margin-bottom: 0.25rem;
+        }
+        #invoice-to-print .to-section span {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111827;
+        }
+        #invoice-to-print .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        #invoice-to-print .invoice-table th,
+        #invoice-to-print .invoice-table td {
+            border-bottom: 1px solid #9ca3af; /* border-gray-400 */
+            padding: 0.75rem 0.25rem; /* py-3 px-1 */
+            text-align: left;
+        }
+        #invoice-to-print .invoice-table th {
+            font-size: 0.75rem; /* 12px */
+            text-transform: uppercase;
+            color: #4b5563; /* text-gray-600 */
+            background-color: #f3f4f6; /* bg-gray-100 */
+            border-top: 2px solid #9ca3af;
+            border-bottom-width: 2px;
+        }
+        #invoice-to-print .invoice-table td {
+            font-size: 1rem;
+        }
+        #invoice-to-print .invoice-table .text-right {
+            text-align: right;
+        }
+        #invoice-to-print .totals-table {
+            width: 50%;
+            margin-left: auto;
+            margin-top: 1.5rem; /* mt-6 */
+        }
+         #invoice-to-print .totals-table td {
+            padding: 0.5rem 0.25rem; /* py-2 px-1 */
+            font-size: 1rem;
+            color: #374151; /* text-gray-700 */
+         }
+         #invoice-to-print .totals-table .label {
+            text-align: right;
+            text-transform: uppercase;
+         }
+         #invoice-to-print .totals-table .total {
+            font-weight: 600;
+            font-size: 1.125rem; /* text-lg */
+            border-top: 2px solid #374151;
+            color: #111827;
+         }
+         #invoice-to-print .footer-note {
+            margin-top: 3rem; /* mt-12 */
+            text-align: center;
+            font-size: 0.875rem; /* 14px */
+            color: #4b5563; /* text-gray-600 */
+         }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-6 md:p-10">
+
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Sistema de Recepción y Venta</h1>
+            <p class="text-gray-600">Gestión de inventario de materia prima y generación de facturas de venta.</p>
+        </header>
+
+        <!-- Sección 1: Formulario de Recepción -->
+        <section id="form-container" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-6 border-b pb-3">1. Registrar Recepción de Materia Prima</h2>
+            
+            <form id="reception-form" class="space-y-6">
+                <!-- (El formulario de recepción es el mismo que antes) -->
+                 <fieldset>
+                    <legend class="text-lg font-medium text-gray-700 mb-2">Datos de Trazabilidad</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="reception-date" class="block text-sm font-medium text-gray-700">Fecha Recepción *</label>
+                            <input type="date" id="reception-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="producer-name" class="block text-sm font-medium text-gray-700">Nombre Productor *</label>
+                            <input type="text" id="producer-name" placeholder="Ej: Juan Pérez" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="farm-name" class="block text-sm font-medium text-gray-700">Nombre Predio / Lote</label>
+                            <input type="text" id="farm-name" placeholder="Ej: Fundo Santa Ana" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend class="text-lg font-medium text-gray-700 mb-2">Datos del Producto</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="species" class="block text-sm font-medium text-gray-700">Especie</label>
+                            <input type="text" id="species" value="Naranjas" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50" readonly>
+                        </div>
+                        <div>
+                            <label for="variety" class="block text-sm font-medium text-gray-700">Variedad</ábel>
+                            <input type="text" id="variety" placeholder="Ej: Navel, Valencia" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                         <div>
+                            <label for="net-weight" class="block text-sm font-medium text-gray-700">Peso Neto (Kg) *</label>
+                            <input type="number" id="net-weight" min="0" step="0.01" placeholder="0.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="text-right">
+                    <button type="submit" id="add-reception-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Registrar en Inventario
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Sección 2: Inventario de Materia Prima (Cámara) -->
+        <section id="inventory-container" class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-6 border-b pb-3">2. Inventario en Cámara (Materia Prima)</h2>
+            
+            <div class="overflow-x-auto">
+                <table id="inventory-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lote ID</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productor</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock (Kg)</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body" class="bg-white divide-y divide-gray-200">
+                        <tr id="empty-row">
+                            <td colspan="6" class="px-4 py-4 text-sm text-gray-500 text-center">No hay materia prima en inventario.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal 1: Formulario de Venta (Para ingresar datos de la factura) -->
+    <div id="sell-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <form id="sell-form">
+                <div class="p-6">
+                    <h3 class="text-2xl font-semibold mb-4">Generar Venta</h3>
+                    <p class="mb-6">Lote de origen: <strong id="sell-lot-info" class="text-blue-600"></strong></p>
+                    
+                    <input type="hidden" id="sell-lot-id">
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-medium text-gray-700 border-b pb-2">Datos del Cliente y Factura</h4>
+                        <div>
+                            <label for="sell-customer" class="block text-sm font-medium text-gray-700">Cliente (TO:) *</label>
+                            <input type="text" id="sell-customer" placeholder="Ej: Jacmor Farms" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="sell-invoice-num" class="block text-sm font-medium text-gray-700">Invoice # *</label>
+                                <input type="text" id="sell-invoice-num" placeholder="Ej: 1001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                            </div>
+                            <div>
+                                <label for="sell-date" class="block text-sm font-medium text-gray-700">Date *</label>
+                                <input type="date" id="sell-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                            </div>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-gray-700 border-b pb-2 pt-4">Detalle del Producto (Venta)</h4>
+                        
+                        <div>
+                            <label for="sell-description" class="block text-sm font-medium text-gray-700">Descripción (Cajas) *</label>
+                            <input type="text" id="sell-description" placeholder="Ej: 2 lb Clams" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="sell-qty" class="block text-sm font-medium text-gray-700">Cantidad (QTY) *</label>
+                                <input type="number" id="sell-qty" min="0" placeholder="Ej: 250" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                            </div>
+                            <div>
+                                <label for="sell-unit-price" class="block text-sm font-medium text-gray-700">Precio Unitario ($) *</label>
+                                <input type="number" id="sell-unit-price" min="0" step="0.01" placeholder="Ej: 4.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                            </div>
+                        </div>
+                        
+                        <h4 class="text-lg font-medium text-gray-700 border-b pb-2 pt-4">Control de Inventario (Interno)</h4>
+                        <div>
+                            <label for="sell-kg-discount" class="block text-sm font-medium text-gray-700">Kg a descontar del Lote *</label>
+                            <input type="number" id="sell-kg-discount" min="0" step="0.01" placeholder="Kg de materia prima usados" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- Botones del Modal -->
+                <div class="bg-gray-100 px-6 py-4 flex justify-end space-x-3 border-t">
+                    <button type="button" class="close-modal-btn py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Previsualizar Factura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Vista Previa de Factura (Para PDF) -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-100 rounded-lg shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+            
+            <!-- Contenedor del PDF (Lo que se va a imprimir) -->
+            <!-- Esta es la réplica exacta de la imagen "Pinebloom Farms" -->
+            <div id="invoice-to-print" class="bg-white p-10">
+                <header class="flex justify-between items-start mb-10">
+                    <!-- Datos de la Empresa (Vendedor) -->
+                    <div class="company-details">
+                        <!-- <img src="URL_DE_TU_LOGO" alt="Pinebloom Farms Logo" class="h-16 mb-4"> -->
+                        <p class="font-bold text-lg">PINEBLOOM FARMS LLC</p>
+                        <p>545 Tarva Road</p>
+                        <p>Albany, Geogia 31721</p>
+                        <p>1-229-734-5611</p>
+                        <p>pinebloompackingllc@gmail.com</p>
+                    </div>
+                    <!-- Título y Datos Factura -->
+                    <div class="invoice-details">
+                        <h1 class="mb-4">INVOICE</h1>
+                        <p><strong>DATE</strong> <span id="inv-date">10/25/2024</span></p>
+                        <p><strong>INVOICE #</strong> <span id="inv-number">1001</span></p>
+                    </div>
+                </header>
+
+                <!-- Datos del Cliente -->
+                <section class="to-section mb-6">
+                    <p>TO</p>
+                    <span id="inv-customer">Jacmor Farms</span>
+                </section>
+
+                <!-- Términos de Pago -->
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>PAYMENT TERMS</th>
+                            <th>DUE DATE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="inv-terms">Due on receipt</td>
+                            <td id="inv-due-date">10/25/2024</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Líneas de la Factura -->
+                <table class="invoice-table" style="margin-top: 2rem;">
+                    <thead>
+                        <tr>
+                            <th>QTY</th>
+                            <th>DESCRIPTION</th>
+                            <th class="text-right">UNIT PRICE</th>
+                            <th class="text-right">LINE TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-items-body">
+                        <!-- Las filas se insertarán aquí. Ejemplo:
+                        <tr>
+                            <td>250</td>
+                            <td>2 lb Clams</td>
+                            <td class="text-right">$4.00</td>
+                            <td class="text-right">$1000.00</td>
+                        </tr>
+                        -->
+                    </tbody>
+                </table>
+                
+                <!-- Totales -->
+                <section class="totals-section">
+                    <table class="totals-table">
+                        <tbody>
+                            <tr>
+                                <td class="label">SUBTOTAL</td>
+                                <td class="text-right" id="inv-subtotal">$1000.00</td>
+                            </tr>
+                            <tr>
+                                <td class="label">SALES TAX</td>
+                                <td class="text-right" id="inv-sales-tax">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="label total">TOTAL</td>
+                                <td class="text-right total" id="inv-total">$1000.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Nota al pie -->
+                <footer class="footer-note">
+                    <p>Make all checks payable to Pinebloom Farms LLC</p>
+                </footer>
+            </div>
+
+            <!-- Botones del Modal (Fuera del área de impresión) -->
+            <div class="bg-gray-100 px-8 py-4 flex justify-end space-x-3 border-t">
+                <button type="button" class="close-modal-btn py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cerrar
+                </button>
+                <button type="button" id="download-pdf-btn" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                    Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- SELECTORES DE ELEMENTOS ---
+            const receptionForm = document.getElementById('reception-form');
+            const inventoryBody = document.getElementById('inventory-body');
+            const emptyRow = document.getElementById('empty-row');
+            
+            // Modal de Venta (Formulario)
+            const sellModal = document.getElementById('sell-modal');
+            const sellForm = document.getElementById('sell-form');
+            const sellLotInfo = document.getElementById('sell-lot-info');
+            const sellLotIdInput = document.getElementById('sell-lot-id');
+
+            // Modal de Factura (PDF Preview)
+            const invoiceModal = document.getElementById('invoice-modal');
+            const downloadPdfBtn = document.getElementById('download-pdf-btn');
+
+            // Botones de cerrar modal (comparten la clase)
+            const closeModalBtns = document.querySelectorAll('.close-modal-btn');
+
+            // --- ESTADO (Base de Datos en Memoria) ---
+            let inventory = [];
+            let receptionCounter = 0; // Para Lote IDs únicos
+
+            // --- FUNCIONES ---
+
+            /**
+             * Formatea un número a moneda (Ej: $4.00)
+             */
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                    // Cambia 'en-US' y 'USD' por 'es-CL' y 'CLP' si prefieres pesos chilenos
+                }).format(value);
+            };
+
+            /**
+             * Formatea un número simple (Ej: 1,000)
+             */
+            const formatNumber = (value) => {
+                 return new Intl.NumberFormat('es-CL').format(value);
+            };
+            
+            /**
+             * Formatea una fecha de YYYY-MM-DD a MM/DD/YYYY (formato USA de la factura)
+             */
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const [year, month, day] = dateString.split('-');
+                return `${month}/${day}/${year}`;
+            };
+
+
+            /**
+             * Actualiza la tabla del inventario en el HTML
+             */
+            const renderInventory = () => {
+                // Limpiar tabla
+                inventoryBody.innerHTML = '';
+
+                if (inventory.length === 0) {
+                    inventoryBody.appendChild(emptyRow);
+                    return;
+                }
+
+                inventory.forEach(lot => {
+                    // No mostrar lotes con 0 Kg
+                    if (lot.netWeight <= 0) return;
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">LOTE-${lot.id}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${formatDate(lot.receptionDate)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${lot.producerName}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${lot.species} ${lot.variety || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">${formatNumber(lot.netWeight)} Kg</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                            <button data-id="${lot.id}" class="sell-btn text-green-600 hover:text-green-800 font-medium">
+                                Vender / Facturar
+                            </button>
+                        </td>
+                    `;
+                    inventoryBody.appendChild(tr);
+                });
+            };
+
+            /**
+             * Muestra el modal de Formulario de Venta
+             */
+            const showSellModal = (lotId) => {
+                const lot = inventory.find(item => item.id === lotId);
+                if (!lot) return;
+
+                sellLotInfo.textContent = `LOTE-${lot.id} (${lot.producerName}) - ${formatNumber(lot.netWeight)} Kg disponibles`;
+                sellLotIdInput.value = lot.id;
+                
+                // Poner fecha de hoy por defecto en el formulario de venta
+                document.getElementById('sell-date').valueAsDate = new Date();
+                
+                sellModal.classList.remove('hidden');
+                sellModal.classList.add('flex');
+            };
+
+            /**
+             * Oculta cualquier modal abierto
+             */
+            const hideModals = () => {
+                sellModal.classList.add('hidden');
+                sellModal.classList.remove('flex');
+                invoiceModal.classList.add('hidden');
+                invoiceModal.classList.remove('flex');
+            };
+
+            /**
+             * Rellena la plantilla de la factura con los datos del formulario
+             */
+            const populateInvoice = (data) => {
+                const {
+                    customer, invoiceNum, date,
+                    qty, description, unitPrice,
+                    lot
+                } = data;
+                
+                // Cálculos
+                const lineTotal = qty * unitPrice;
+                const subtotal = lineTotal;
+                const salesTax = 0; // La factura de ejemplo no tiene, se puede agregar
+                const total = subtotal + salesTax;
+                
+                // --- Rellenar Factura ---
+                // Encabezado
+                document.getElementById('inv-date').textContent = formatDate(date);
+                document.getElementById('inv-number').textContent = invoiceNum;
+                
+                // Cliente
+                document.getElementById('inv-customer').textContent = customer;
+
+                // Términos (puedes hacerlos inputs en el formulario si quieres)
+                document.getElementById('inv-terms').textContent = 'Due on receipt';
+                document.getElementById('inv-due-date').textContent = formatDate(date);
+
+                // Líneas de Items
+                const itemsBody = document.getElementById('inv-items-body');
+                itemsBody.innerHTML = `
+                    <tr>
+                        <td class="py-3 px-1">${formatNumber(qty)}</td>
+                        <td class="py-3 px-1">${description}</td>
+                        <td class="py-3 px-1 text-right">${formatCurrency(unitPrice)}</td>
+                        <td class="py-3 px-1 text-right">${formatCurrency(lineTotal)}</td>
+                    </tr>
+                `;
+                // Puedes agregar un bucle aquí si permites múltiples líneas
+
+                // Totales
+                document.getElementById('inv-subtotal').textContent = formatCurrency(subtotal);
+                document.getElementById('inv-sales-tax').textContent = formatCurrency(salesTax);
+                document.getElementById('inv-total').textContent = formatCurrency(total);
+                
+                // Mostrar modal de factura
+                invoiceModal.classList.remove('hidden');
+                invoiceModal.classList.add('flex');
+            };
+
+            /**
+             * Descarga el PDF usando html2pdf.js
+             */
+            const downloadPDF = () => {
+                const invoiceElement = document.getElementById('invoice-to-print');
+                const invoiceNum = document.getElementById('inv-number').textContent;
+                const customer = document.getElementById('inv-customer').textContent;
+
+                const opt = {
+                    margin:       0.5,
+                    filename:     `Factura_${invoiceNum}_${customer}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                // Deshabilitar botón para evitar doble clic
+                downloadPdfBtn.textContent = 'Generando...';
+                downloadPdfBtn.disabled = true;
+
+                html2pdf().from(invoiceElement).set(opt).save().then(() => {
+                    // Una vez guardado, reactivar botón y cerrar
+                    downloadPdfBtn.textContent = 'Descargar PDF';
+                    downloadPdfBtn.disabled = false;
+                    hideModals();
+                    sellForm.reset(); // Limpiar formulario de venta
+                });
+            };
+
+            // --- EVENT LISTENERS ---
+
+            // 1. Registrar Recepción (Materia Prima)
+            receptionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const netWeight = parseFloat(document.getElementById('net-weight').value);
+                if (!netWeight || netWeight <= 0) {
+                    alert('El Peso Neto (Kg) debe ser mayor a 0.');
+                    return;
+                }
+
+                receptionCounter++;
+
+                const newLot = {
+                    id: receptionCounter,
+                    receptionDate: document.getElementById('reception-date').value,
+                    producerName: document.getElementById('producer-name').value,
+                    farmName: document.getElementById('farm-name').value,
+                    species: document.getElementById('species').value,
+                    variety: document.getElementById('variety').value,
+                    netWeight: netWeight,
+                };
+
+                inventory.push(newLot);
+                renderInventory();
+                receptionForm.reset();
+                // Restaurar valores por defecto
+                document.getElementById('species').value = "Naranjas";
+                document.getElementById('reception-date').valueAsDate = new Date();
+            });
+
+            // 2. Clic en "Vender / Facturar" (Botón en la tabla)
+            inventoryBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('sell-btn')) {
+                    const lotId = parseInt(e.target.dataset.id);
+                    showSellModal(lotId);
+                }
+            });
+
+            // 3. Enviar Formulario de Venta (Previsualizar Factura)
+            sellForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Obtener datos del formulario
+                const lotId = parseInt(sellLotIdInput.value);
+                const kgDiscount = parseFloat(document.getElementById('sell-kg-discount').value);
+                const lot = inventory.find(item => item.id === lotId);
+
+                // Validación de Stock
+                if (!lot || kgDiscount > lot.netWeight) {
+                    alert(`Error: No puedes descontar ${kgDiscount} Kg. El LOTE-${lotId} solo tiene ${lot.netWeight} Kg disponibles.`);
+                    return;
+                }
+                
+                // Si la validación es OK, descontar del inventario
+                lot.netWeight -= kgDiscount;
+                renderInventory(); // Actualizar la tabla de inventario
+
+                // Preparar datos para la factura
+                const invoiceData = {
+                    lot: lot,
+                    customer: document.getElementById('sell-customer').value,
+                    invoiceNum: document.getElementById('sell-invoice-num').value,
+                    date: document.getElementById('sell-date').value,
+                    qty: parseFloat(document.getElementById('sell-qty').value),
+                    description: document.getElementById('sell-description').value,
+                    unitPrice: parseFloat(document.getElementById('sell-unit-price').value),
+                };
+
+                // Rellenar y mostrar la vista previa de la factura
+                populateInvoice(invoiceData);
+                
+                // Ocultar modal de formulario
+                sellModal.classList.add('hidden');
+                sellModal.classList.remove('flex');
+            });
+
+            // 4. Descargar PDF
+            downloadPdfBtn.addEventListener('click', downloadPDF);
+
+            // 5. Cerrar Modales
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', hideModals);
+            });
+            
+            // --- INICIALIZACIÓN ---
+            document.getElementById('reception-date').valueAsDate = new Date();
+            renderInventory(); // Renderizar la tabla vacía al inicio
+        });
+    </script>
+</body>
+</html>
