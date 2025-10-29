@@ -4,361 +4,343 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Recepción y Venta de Fruta</title>
-    <!-- Incluimos Tailwind CSS -->
+    <!-- Carga Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 
-      PASO CLAVE: Importamos la librería html2pdf.js para generar el PDF
-    -->
-    <!-- CORREGIDO: xintegrity -> integrity -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+    <!-- Carga html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" 
+            integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+            
     <style>
-         /* Estilos para la factura (imitando la imagen) */
-         #invoice-to-print {
+        /* Estilos base */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para la factura */
+        #invoice-preview {
+            max-width: 750px;
             width: 100%;
-            /* Ajustado: Reducido de 800px a 750px para asegurar que quepa en hoja carta */
-            max-width: 750px; 
             margin: 0 auto;
+            border: 1px solid #ddd;
+            padding: 24px;
             font-family: 'Times New Roman', Times, serif;
-            color: #000;
-            background-color: #fff;
-            border: 1px solid #e5e7eb; /* Opcional: borde suave para la vista previa */
-         }
-         #invoice-to-print header {
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+            color: black;
+        }
+        #invoice-preview .invoice-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 2.5rem; /* mb-10 */
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #ccc;
-         }
-         #invoice-to-print .company-details {
-            font-size: 0.875rem; /* 14px */
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 20px;
+        }
+        #invoice-preview .company-details {
+            font-size: 14px;
             line-height: 1.4;
-         }
-         #invoice-to-print .company-details p {
-            margin: 0;
-         }
-         #invoice-to-print .invoice-details h1 {
-            font-size: 2.25rem; /* 36px */
+        }
+        #invoice-preview .company-details img {
+            width: 120px;
+            margin-bottom: 10px;
+        }
+        #invoice-preview .invoice-title {
+            text-align: right;
+        }
+        #invoice-preview .invoice-title h1 {
+            font-size: 48px;
             font-weight: bold;
-            letter-spacing: 0.1em;
-            margin-bottom: 1rem;
-            text-align: right;
-            color: #374151; /* text-gray-700 */
-         }
-         #invoice-to-print .invoice-details p {
-            text-align: right;
-            font-size: 0.875rem; /* 14px */
+            color: #333;
             margin: 0;
-         }
-         #invoice-to-print .invoice-details p strong {
-            margin-right: 0.5rem;
-         }
-         
-         #invoice-to-print .to-section {
-            margin-bottom: 1.5rem; /* mb-6 */
-            font-size: 0.875rem;
-         }
-         #invoice-to-print .to-section p {
-            font-size: 0.75rem; /* 12px */
+        }
+        #invoice-preview .invoice-meta {
+            font-size: 14px;
+        }
+        #invoice-preview .bill-to {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        #invoice-preview .bill-to strong {
+            font-size: 12px;
             text-transform: uppercase;
-            color: #4b5563; /* text-gray-600 */
-            margin-bottom: 0.25rem;
-         }
-         
-         #invoice-to-print .invoice-table {
+            color: #555;
+        }
+        #invoice-preview .invoice-table {
             width: 100%;
+            margin-top: 20px;
             border-collapse: collapse;
-            font-size: 0.875rem; /* 14px */
-         }
-         #invoice-to-print .invoice-table th,
-         #invoice-to-print .invoice-table td {
-            border: 1px solid #ccc;
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
-         }
-         #invoice-to-print .invoice-table th {
-            background-color: #e5e7eb; /* bg-gray-200 */
+        }
+        #invoice-preview .invoice-table th, 
+        #invoice-preview .invoice-table td {
+            border-bottom: 1px solid #ccc;
+            padding: 8px;
             text-align: left;
+            font-size: 14px;
+        }
+        #invoice-preview .invoice-table th {
+            background-color: #eee;
+            color: #333;
             text-transform: uppercase;
-            font-size: 0.75rem; /* 12px */
-            color: #374151;
-         }
-         
-         /* Alineación específica para la tabla de items */
-         #invoice-to-print .invoice-table thead th.text-right,
-         #invoice-to-print .invoice-table tbody td.text-right {
-             text-align: right;
-         }
-
-         #invoice-to-print .totals-section {
-            margin-top: 2rem; /* mt-8 */
-            display: flex;
-            justify-content: flex-end;
-         }
-         #invoice-to-print .totals-table {
-            width: 100%;
-            max-width: 300px; /* Ancho max para la tabla de totales */
-            border-collapse: collapse;
-            font-size: 0.875rem; /* 14px */
-         }
-         #invoice-to-print .totals-table td {
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
-            border: 1px solid #ccc;
-         }
-         #invoice-to-print .totals-table td.label {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        #invoice-preview .invoice-table td {
+            vertical-align: top;
+        }
+        #invoice-preview .invoice-table .text-right {
             text-align: right;
-            font-weight: 600; /* semibold */
-            color: #4b5563; /* text-gray-600 */
-            background-color: #f9fafb; /* bg-gray-50 */
-         }
-         #invoice-to-print .totals-table td.label.total {
-             font-weight: bold;
-             color: #000;
-             font-size: 1rem; /* 16px */
-         }
-         
-         #invoice-to-print .footer-note {
-            margin-top: 3rem; /* mt-12 */
+        }
+        #invoice-preview .invoice-summary {
+            margin-top: 20px;
+            float: right;
+            width: 250px;
+            font-size: 14px;
+        }
+        #invoice-preview .invoice-summary div {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+        #invoice-preview .invoice-summary div strong {
+            font-weight: bold;
+        }
+        #invoice-preview .invoice-summary .total {
+            font-size: 16px;
+            font-weight: bold;
+            border-top: 2px solid #333;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        #invoice-preview .invoice-footer {
+            clear: both;
+            margin-top: 40px;
             text-align: center;
-            font-size: 0.875rem; /* 14px */
-            color: #4b5563; /* text-gray-600 */
-         }
+            font-size: 12px;
+            color: #555;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        /* Estilos para el modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 24px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 95%;
+            max-width: 1000px;
+            position: relative;
+        }
+        .modal-body {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+        .modal-close:hover,
+        .modal-close:focus {
+            color: black;
+            text-decoration: none;
+        }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-800 p-4 sm:p-8">
 
-    <div class="container mx-auto p-6 md:p-10">
-
-        <header class="mb-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="mb-6">
             <h1 class="text-3xl font-bold text-gray-900">Sistema de Recepción y Venta</h1>
             <p class="text-gray-600">Gestión de inventario de materia prima y generación de facturas de venta.</p>
-        </header>
-
-        <!-- NUEVO: Panel de Estado de Autenticación -->
-        <div id="auth-status" class="mb-6 p-4 rounded-md text-sm font-medium text-center bg-yellow-100 text-yellow-700">
-            <p>Conectando a la base de datos...</p>
         </div>
 
-        <!-- Sección 1: Formulario de Recepción -->
-        <section id="form-container" class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-2xl font-semibold mb-6 border-b pb-3">1. Registrar Recepción de Materia Prima</h2>
+        <!-- Panel de Estado -->
+        <div id="status-panel" class="mb-4 p-3 rounded-lg text-white font-semibold text-sm flex items-center justify-center transition-all duration-300 bg-gray-400">
+            <span id="status-message">Inicializando...</span>
+        </div>
+
+        <!-- 1. Formulario de Recepción -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">1. Registrar Recepción de Materia Prima</h2>
             
-            <form id="reception-form" class="space-y-6">
-                 <fieldset>
+            <form id="reception-form" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Datos de Trazabilidad -->
+                <fieldset class="md:col-span-3">
                     <legend class="text-lg font-medium text-gray-700 mb-2">Datos de Trazabilidad</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label for="reception-date" class="block text-sm font-medium text-gray-700">Fecha Recepción *</label>
-                            <input type="date" id="reception-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <input type="date" id="reception-date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
                             <label for="producer-name" class="block text-sm font-medium text-gray-700">Nombre Productor *</label>
-                            <input type="text" id="producer-name" placeholder="Ej: Juan Pérez" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <input type="text" id="producer-name" value="Pinebloom" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
-                            <label for="farm-name" class="block text-sm font-medium text-gray-700">Nombre Predio / Lote</label>
-                            <input type="text" id="farm-name" placeholder="Ej: Fundo Santa Ana" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <label for="lot-name" class="block text-sm font-medium text-gray-700">Nombre Predio / Lote</label>
+                            <input type="text" id="lot-name" value="Pinebloom Orange" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                     </div>
                 </fieldset>
-                <fieldset>
+
+                <!-- Datos del Producto -->
+                <fieldset class="md:col-span-3">
                     <legend class="text-lg font-medium text-gray-700 mb-2">Datos del Producto</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label for="species" class="block text-sm font-medium text-gray-700">Especie</label>
-                            <input type="text" id="species" value="Naranjas" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50" readonly>
+                            <input type="text" id="species" value="Naranjas" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm sm:text-sm" readonly>
                         </div>
                         <div>
                             <label for="variety" class="block text-sm font-medium text-gray-700">Variedad</label>
-                            <input type="text" id="variety" placeholder="Ej: Navel, Valencia" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" id="variety" value="Valencia" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
-                         <div>
+                        <div>
                             <label for="net-weight" class="block text-sm font-medium text-gray-700">Peso Neto (Kg) *</label>
-                            <input type="number" id="net-weight" min="0" step="0.01" placeholder="0.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <input type="number" id="net-weight" step="0.01" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                     </div>
                 </fieldset>
-                <div id="reception-error" class="text-red-600 text-sm mt-2"></div>
-                <div class="text-right">
-                    <button type="submit" id="add-reception-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                
+                <div class="md:col-span-3 text-right">
+                    <div id="reception-error" class="text-red-600 text-sm mb-2 text-left"></div>
+                    <button type="submit" id="submit-reception" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Registrar en Inventario
                     </button>
                 </div>
             </form>
-        </section>
-
-        <!-- Botón para Nueva Venta -->
-        <div class="flex justify-end mb-4">
-            <button id="new-sale-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-lg font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+        </div>
+        
+        <!-- Botón Crear Nueva Venta -->
+        <div class="text-right mb-8">
+            <button id="open-sale-modal-btn" class="py-2 px-5 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                 + Crear Nueva Venta
             </button>
         </div>
 
-        <!-- Sección 2: Inventario de Materia Prima (Cámara) -->
-        <section id="inventory-container" class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-2xl font-semibold mb-6 border-b pb-3">2. Inventario en Cámara (Materia Prima)</h2>
-            
+        <!-- 2. Inventario en Cámara -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">2. Inventario en Cámara (Materia Prima)</h2>
             <div class="overflow-x-auto">
-                <table id="inventory-table" class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lote ID</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productor</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock (Kg)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lote ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productor</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock (Kg)</th>
                         </tr>
                     </thead>
-                    <tbody id="inventory-body" class="bg-white divide-y divide-gray-200">
-                        <tr id="empty-inventory-row">
-                            <td colspan="5" class="px-4 py-4 text-sm text-gray-500 text-center">No hay materia prima en inventario.</td>
+                    <tbody id="inventory-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Filas de inventario se insertan aquí -->
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay materia prima en inventario.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
 
-        <!-- NUEVO: Sección 3: Resumen de Ventas -->
-        <section id="sales-container" class="bg-white p-6 rounded-lg shadow-md">
-            <div class="flex justify-between items-center mb-6 border-b pb-3">
-                <h2 class="text-2xl font-semibold">3. Resumen de Ventas</h2>
-                <button id="download-excel-btn" class="inline-flex justify-center py-2 px-4 border border-green-600 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+        <!-- 3. Resumen de Ventas -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-xl font-semibold">3. Resumen de Ventas (Facturas Generadas)</h2>
+                <button id="download-csv-btn" class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Descargar Excel (.csv)
                 </button>
             </div>
-            
             <div class="overflow-x-auto">
-                <table id="sales-table" class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factura #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Líneas</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Total</th>
                         </tr>
                     </thead>
-                    <tbody id="sales-body" class="bg-white divide-y divide-gray-200">
-                        <tr id="empty-sales-row">
-                            <td colspan="4" class="px-4 py-4 text-sm text-gray-500 text-center">No hay ventas registradas.</td>
+                    <tbody id="sales-summary-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Filas de ventas se insertan aquí -->
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
     </div>
 
-    <!-- Modal 1: Formulario de Venta (Para ingresar datos de la factura) -->
-    <div id="sell-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <form id="sell-form">
-                <div class="p-6 space-y-6">
-                    <h3 class="text-2xl font-semibold">Generar Nueva Venta</h3>
-                    
-                    <!-- Datos Cliente y Factura -->
-                    <fieldset class="border rounded-md p-4">
-                        <legend class="text-lg font-medium text-gray-700 px-2">Datos del Cliente y Factura</legend>
+    <!-- Modal para Nueva Venta -->
+    <div id="sale-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-sale-modal" class="modal-close">&times;</span>
+            <h2 class="text-2xl font-semibold mb-4">Generar Nueva Venta</h2>
+            
+            <form id="sale-form">
+                <div class="modal-body p-2">
+                    <!-- Datos del Cliente -->
+                    <fieldset class="mb-4">
+                        <legend class="text-lg font-medium text-gray-700 mb-2">Datos del Cliente</legend>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="sell-customer" class="block text-sm font-medium text-gray-700">Cliente (TO:) *</label>
-                                <input type="text" id="sell-customer" placeholder="Ej: Jacmor Farms" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                                <label for="sale-customer" class="block text-sm font-medium text-gray-700">Facturar a (Bill To): *</label>
+                                <input type="text" id="sale-customer" value="Jacmor Farms" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             </div>
                             <div>
-                                <label for="sell-invoice-num" class="block text-sm font-medium text-gray-700">Invoice # *</label>
-                                <input type="text" id="sell-invoice-num" placeholder="Ej: 1001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                                <label for="sale-date" class="block text-sm font-medium text-gray-700">Fecha Factura: *</label>
+                                <input type="date" id="sale-date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             </div>
                             <div>
-                                <label for="sell-date" class="block text-sm font-medium text-gray-700">Date *</label>
-                                <input type="date" id="sell-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                                <label for="sale-invoice-id" class="block text-sm font-medium text-gray-700">Factura #: *</Iabel>
+                                <input type="text" id="sale-invoice-id" value="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- Añadir Líneas de Factura (Múltiples) -->
-                    <fieldset class="border rounded-md p-4">
-                        <legend class="text-lg font-medium text-gray-700 px-2">Añadir Líneas de Factura</legend>
-                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                            <div class="md:col-span-3">
-                                <label for="new-line-desc" class="block text-sm font-medium text-gray-700">Descripción (Cajas)</label>
-                                <input type="text" id="new-line-desc" placeholder="Ej: 2 lb Clams" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            </div>
-                            <div>
-                                <label for="new-line-qty" class="block text-sm font-medium text-gray-700">Cantidad (QTY)</label>
-                                <input type="number" id="new-line-qty" min="0" placeholder="Ej: 250" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            </div>
-                            <div>
-                                <label for="new-line-price" class="block text-sm font-medium text-gray-700">Precio Unitario ($)</label>
-                                <input type="number" id="new-line-price" min="0" step="0.01" placeholder="Ej: 4.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            </div>
-                            <div>
-                                <button type="button" id="add-invoice-line-btn" class="w-full py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">Añadir</button>
-                            </div>
+                    <!-- Líneas de Producto (Venta) -->
+                    <fieldset class="mb-4">
+                        <legend class="text-lg font-medium text-gray-700 mb-2">Líneas de Producto (Venta)</legend>
+                        <div id="sale-product-lines" class="space-y-3 mb-3">
+                            <!-- Filas de productos se añaden aquí dinámicamente -->
                         </div>
-                        <div id="line-item-error" class="text-red-600 text-sm mt-2"></div>
-                        
-                        <!-- Tabla de líneas añadidas -->
-                        <h4 class="text-base font-medium text-gray-700 mt-4 mb-2">Líneas en esta Factura</h4>
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50 text-xs uppercase">
-                                <tr>
-                                    <th class="px-2 py-2">Descripción</th>
-                                    <th class="px-2 py-2">Qty</th>
-                                    <th class="px-2 py-2">P. Unitario</th>
-                                    <th class="px-2 py-2">Total</th>
-                                    <th class="px-2 py-2">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sell-items-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Las líneas se añadirán aquí -->
-                            </tbody>
-                        </table>
+                        <button type="button" id="add-product-line-btn" class="py-1 px-3 border border-gray-400 rounded-md text-sm text-gray-700 hover:bg-gray-100">+ Añadir Línea de Producto</button>
                     </fieldset>
-                    
-                    <!-- Descuento de Inventario (Múltiples Lotes) -->
-                    <fieldset class="border rounded-md p-4">
-                        <legend class="text-lg font-medium text-gray-700 px-2">Descuento de Inventario (Multi-Lote)</legend>
-                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                            <div class="md:col-span-3">
-                                <label for="discount-lot-select" class="block text-sm font-medium text-gray-700">Lote de Origen</label>
-                                <select id="discount-lot-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
-                            </div>
-                            <div>
-                                <label for="discount-kg" class="block text-sm font-medium text-gray-700">Kg a Descontar</label>
-                                <input type="number" id="discount-kg" min="0" step="0.01" placeholder="0.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            </div>
-                            <div>
-                                <button type="button" id="add-discount-btn" class="w-full py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">Añadir</button>
-                            </div>
-                        </div>
-                        <div id="discount-error" class="text-red-600 text-sm mt-2"></div>
 
-                        <!-- Tabla de descuentos añadidos -->
-                        <h4 class="text-base font-medium text-gray-700 mt-4 mb-2">Lotes a Descontar en esta Venta</h4>
-                        <table class="min-w-full divide-y divide-gray-200">
-                             <thead class="bg-gray-50 text-xs uppercase">
-                                <tr>
-                                    <th class="px-2 py-2">Lote ID</th>
-                                    <th class="px-2 py-2">Productor</th>
-                                    <th class="px-2 py-2">Kg a Descontar</th>
-                                    <th class="px-2 py-2">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sell-discounts-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Los descuentos de lote se añadirán aquí -->
-                            </tbody>
-                        </table>
+                    <!-- Descuento de Inventario (Materia Prima) -->
+                    <fieldset class="mb-4">
+                        <legend class="text-lg font-medium text-gray-700 mb-2">Descuento de Inventario (Materia Prima)</legend>
+                        <div id="sale-inventory-lines" class="space-y-3 mb-3">
+                            <!-- Filas de descuento de inventario se añaden aquí dinámicamente -->
+                        </div>
+                        <button type="button" id="add-inventory-line-btn" class="py-1 px-3 border border-gray-400 rounded-md text-sm text-gray-700 hover:bg-gray-100">+ Añadir Lote a Descontar</button>
                     </fieldset>
-                    
-                    <div id="sell-form-error" class="text-red-600 text-center font-medium"></div>
 
                 </div>
-                <!-- Botones del Modal -->
-                <div class="bg-gray-100 px-6 py-4 flex justify-end space-x-3 border-t">
-                    <button type="button" class="close-modal-btn py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+
+                <div class="mt-6 px-2 pb-2 text-right bg-gray-50 rounded-b-lg">
+                    <div id="sale-error-message" class="text-red-600 text-sm mb-2 text-left font-semibold"></div>
+                    <button type="button" id="preview-invoice-btn" class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Previsualizar Factura
                     </button>
                 </div>
@@ -366,809 +348,937 @@
         </div>
     </div>
 
-    <!-- Modal 2: Vista Previa de Factura (Para PDF) -->
-    <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-gray-100 rounded-lg shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-            
-            <div id="invoice-to-print" class="bg-white p-10">
-                <header class="flex justify-between items-start mb-10">
-                    <div class="company-details">
-                        <p class="font-bold text-lg">PINEBLOOM FARMS LLC</p>
-                        <p>545 Tarva Road</p>
-                        <p>Albany, Geogia 31721</p>
-                        <p>1-229-734-5611</p>
-                        <p>pinebloompackingllc@gmail.com</p>
+    <!-- Modal para Previsualización de Factura -->
+    <div id="invoice-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-invoice-modal" class="modal-close">&times;</span>
+            <div class="modal-body" id="invoice-modal-body">
+                <!-- Contenido de la factura (invoice-preview) se inyecta aquí -->
+                <div id="invoice-preview" class="p-4 sm:p-6">
+                    <!-- Cabecera -->
+                    <div class="invoice-header">
+                        <div class="company-details">
+                            <img src="https://placehold.co/200x80/png?text=PINEBLOOM" alt="Logo Pinebloom Farms" class="w-32 mb-2">
+                            <strong>Pinebloom Farms LLC</strong><br>
+                            545 Tarva Road<br>
+                            Albany, Georgia 31721<br>
+                            1-229-734-5611<br>
+                            pinebloompackingllc@gmail.com
+                        </div>
+                        <div class="invoice-title">
+                            <h1>INVOICE</h1>
+                            <div class="invoice-meta">
+                                <div>DATE: <strong id="invoice-date-val"></strong></div>
+                                <div>INVOICE #: <strong id="invoice-id-val"></strong></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="invoice-details">
-                        <h1 class="mb-4">INVOICE</h1>
-                        <p><strong>DATE</strong> <span id="inv-date">10/25/2024</span></p>
-                        <p><strong>INVOICE #</strong> <span id="inv-number">1001</span></p>
+                    
+                    <!-- Cliente -->
+                    <div class="bill-to">
+                        <strong>TO:</strong>
+                        <div id="invoice-customer-val" class="font-medium text-lg"></div>
                     </div>
-                </header>
 
-                <section class="to-section mb-6">
-                    <p>TO</p>
-                    <span id="inv-customer">Jacmor Farms</span>
-                </section>
-
-                <table class="invoice-table">
-                    <thead>
-                        <tr>
-                            <th>PAYMENT TERMS</th>
-                            <th>DUE DATE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td id="inv-terms">Due on receipt</td>
-                            <td id="inv-due-date">10/25/2024</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <table class="invoice-table" style="margin-top: 2rem;">
-                    <thead>
-                        <tr>
-                            <th>QTY</th>
-                            <th>DESCRIPTION</th>
-                            <th class="text-right">UNIT PRICE</th>
-                            <th class="text-right">LINE TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inv-items-body">
-                        <!-- Las filas se insertarán aquí -->
-                    </tbody>
-                </table>
-                
-                <section class="totals-section">
-                    <table class="totals-table">
+                    <!-- Detalles de Pago (Estático como la imagen) -->
+                    <table class="invoice-table mt-4">
+                        <thead>
+                            <tr>
+                                <th style="width: 50%;">PAYMENT TERMS</th>
+                                <th style="width: 50%;">DUE DATE</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr>
-                                <td class="label">SUBTOTAL</td>
-                                <td class="text-right" id="inv-subtotal">$0.00</td>
-                            </tr>
-                            <tr>
-                                <td class="label">SALES TAX</td>
-                                <td class="text-right" id="inv-sales-tax">$0.00</td>
-                            </tr>
-                            <tr>
-                                <td class="label total">TOTAL</td>
-                                <td class="text-right" id="inv-total">$0.00</td>
+                                <td>Due on receipt</td>
+                                <td></td>
                             </tr>
                         </tbody>
                     </table>
-                </section>
 
-                <footer class="footer-note">
-                    <p>Make all checks payable to Pinebloom Farms LLC</p>
-                </footer>
+                    <!-- Líneas de Items -->
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">QTY</th>
+                                <th style="width: 50%;">DESCRIPTION</th>
+                                <th style="width: 15%;" class="text-right">UNIT PRICE</th>
+                                <th style="width: 20%;" class="text-right">LINE TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-items-body">
+                            <!-- Las líneas de productos se insertan aquí -->
+                        </tbody>
+                    </table>
+
+                    <!-- Resumen de Totales -->
+                    <div class="invoice-summary">
+                        <div>
+                            <span>SUBTOTAL</span>
+                            <span id="invoice-subtotal-val">$0.00</span>
+                        </div>
+                        <div>
+                            <span>SALES TAX</span>
+                            <span>$0.00</span>
+                        </div>
+                        <div class="total">
+                            <strong>TOTAL</strong>
+                            <strong id="invoice-total-val">$0.00</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- Pie de página -->
+                    <div class="invoice-footer">
+                        Make all checks payable to Pinebloom Farms LLC
+                    </div>
+                </div>
             </div>
-
-            <!-- Botones del Modal (Fuera del área de impresión) -->
-            <div class="bg-gray-100 px-8 py-4 flex justify-end space-x-3 border-t">
-                <button type="button" class="close-modal-btn py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    Cerrar
-                </button>
-                <button type="button" id="download-pdf-btn" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                    Descargar PDF
+            
+            <div id="invoice-modal-footer" class="mt-6 text-right bg-gray-50 p-4 rounded-b-lg">
+                <span id="invoice-confirm-error" class="text-red-600 text-sm mr-4"></span>
+                <button type="button" id="confirm-and-save-btn" class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Confirmar y Guardar Venta
                 </button>
             </div>
         </div>
     </div>
 
 
-    <!-- SDKs de Firebase -->
+    <!-- Imports de Firebase (Módulos) -->
     <script type="module">
-        // Importar funciones de Firebase
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // Importaciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, updateDoc, onSnapshot, collection, query, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, 
+            onSnapshot, collection, query, writeBatch, runTransaction,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // --- Configuración de Firebase ---
+        // Tu configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5-1MpNQMnsPULW7JZZ8aRHC08UM3IVHY",
+            authDomain: "orange-pbloom.firebaseapp.com",
+            projectId: "orange-pbloom",
+            storageBucket: "orange-pbloom.appspot.com", // Corregido: .appspot.com es lo habitual
+            messagingSenderId: "306332234261",
+            appId: "1:306332234261:web:a991cc5b30c2cfdfda941c",
+            measurementId: "G-Z185FETY22"
+        };
+        
+        // --- Variables Globales de la App ---
+        let db, auth, userId, appId;
+        let inventoryListener = null; // Para manejar el 'listener' de inventario
+        let salesListener = null; // Para manejar el 'listener' de ventas
+        let localInventoryCache = new Map(); // Cache local del inventario
+        
+        // --- Variables de estado de la Venta (para el modal) ---
+        let currentSaleData = {
+            customer: '',
+            date: '',
+            invoiceId: '',
+            productLines: [], // { description, qty, price }
+            inventoryLines: [], // { lotId, lotDesc, kgToDiscount }
+            subtotal: 0,
+            total: 0
+        };
 
-            // --- VARIABLES GLOBALES DE FIREBASE ---
-            let db, auth, userId, inventoryCollectionRef, salesCollectionRef; // NUEVO: salesCollectionRef
-            let localInventory = []; // Caché local del inventario para validaciones
-            let localSales = []; // NUEVO: Caché local de ventas para Excel
+        // --- Elementos del DOM ---
+        const statusPanel = document.getElementById('status-panel');
+        const statusMessage = document.getElementById('status-message');
+        const receptionForm = document.getElementById('reception-form');
+        const receptionError = document.getElementById('reception-error');
+        const inventoryTableBody = document.getElementById('inventory-table-body');
+        const salesSummaryTableBody = document.getElementById('sales-summary-table-body');
+        const downloadCsvBtn = document.getElementById('download-csv-btn');
+        
+        // Elementos del Modal de Venta
+        const openSaleModalBtn = document.getElementById('open-sale-modal-btn');
+        const saleModal = document.getElementById('sale-modal');
+        const closeSaleModalBtn = document.getElementById('close-sale-modal');
+        const saleForm = document.getElementById('sale-form');
+        const saleProductLines = document.getElementById('sale-product-lines');
+        const addProductLineBtn = document.getElementById('add-product-line-btn');
+        const saleInventoryLines = document.getElementById('sale-inventory-lines');
+        const addInventoryLineBtn = document.getElementById('add-inventory-line-btn');
+        const saleErrorMessage = document.getElementById('sale-error-message');
+        const previewInvoiceBtn = document.getElementById('preview-invoice-btn');
 
-            // --- SELECTORES DE ELEMENTOS ---
-            const receptionForm = document.getElementById('reception-form');
-            const receptionError = document.getElementById('reception-error');
-            const inventoryBody = document.getElementById('inventory-body');
-            const emptyInventoryRow = document.getElementById('empty-inventory-row');
+        // Elementos del Modal de Factura
+        const invoiceModal = document.getElementById('invoice-modal');
+        const closeInvoiceModalBtn = document.getElementById('close-invoice-modal');
+        const invoiceModalBody = document.getElementById('invoice-modal-body');
+        const invoicePreview = document.getElementById('invoice-preview');
+        const confirmAndSaveBtn = document.getElementById('confirm-and-save-btn');
+        const invoiceConfirmError = document.getElementById('invoice-confirm-error');
+
+        // Formateadores
+        const { format: formatCurrency } = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+        const { format: formatNumber } = new Intl.NumberFormat('en-US');
+
+        // --- Funciones de Utilidad (Modales) ---
+
+        function showModal(modalElement) {
+            if (modalElement) {
+                console.log("Mostrando modal:", modalElement.id);
+                modalElement.style.display = 'block';
+            } else {
+                console.error("Error: Elemento modal no encontrado.");
+            }
+        }
+
+        function closeModal(modalElement) {
+            if (modalElement) {
+                console.log("Cerrando modal:", modalElement.id);
+                modalElement.style.display = 'none';
+            } else {
+                console.error("Error: Elemento modal no encontrado.");
+            }
+        }
+
+        // --- Lógica de Inicialización y Autenticación ---
+
+        // Función para actualizar el estado visual
+        function updateStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusPanel.classList.remove('bg-gray-400', 'bg-green-500', 'bg-red-500', 'bg-yellow-500');
             
-            const newSaleBtn = document.getElementById('new-sale-btn');
+            switch (type) {
+                case 'success':
+                    statusPanel.classList.add('bg-green-500');
+                    break;
+                case 'error':
+                    statusPanel.classList.add('bg-red-500');
+                    break;
+                case 'warning':
+                    statusPanel.classList.add('bg-yellow-500');
+                    break;
+                case 'info':
+                default:
+                    statusPanel.classList.add('bg-gray-400');
+                    break;
+            }
+        }
 
-            // Modal de Venta (Formulario)
-            const sellModal = document.getElementById('sell-modal');
-            const sellForm = document.getElementById('sell-form');
-            const sellFormError = document.getElementById('sell-form-error');
-
-            const addInvoiceLineBtn = document.getElementById('add-invoice-line-btn');
-            const sellItemsBody = document.getElementById('sell-items-body');
-            const lineItemError = document.getElementById('line-item-error');
-
-            const addDiscountBtn = document.getElementById('add-discount-btn');
-            const discountLotSelect = document.getElementById('discount-lot-select');
-            const sellDiscountsBody = document.getElementById('sell-discounts-body');
-            const discountError = document.getElementById('discount-error');
-
-            // Modal de Factura (PDF Preview)
-            const invoiceModal = document.getElementById('invoice-modal');
-            const downloadPdfBtn = document.getElementById('download-pdf-btn');
-
-            // Botones de cerrar modal
-            const closeModalBtns = document.querySelectorAll('.close-modal-btn');
-
-            // NUEVO: Selectores de Resumen de Ventas
-            const salesBody = document.getElementById('sales-body');
-            const emptySalesRow = document.getElementById('empty-sales-row');
-            const downloadExcelBtn = document.getElementById('download-excel-btn');
-
-            // NUEVO: Selector de estado de autenticación
-            const authStatus = document.getElementById('auth-status');
-
-
-            // --- INICIALIZACIÓN DE FIREBASE ---
+        // Inicializa Firebase
+        async function initFirebase() {
             try {
-                // Configuración de Firebase PROPORCIONADA POR EL USUARIO
-                const firebaseConfig = {
-                  apiKey: "AIzaSyB5-1MpNQMnsPULW7JZZ8aRHC08UM3IVHY",
-                  authDomain: "orange-pbloom.firebaseapp.com",
-                  projectId: "orange-pbloom",
-                  storageBucket: "orange-pbloom.firebasestorage.app", // Corregido el TLD
-                  messagingSenderId: "306332234261",
-                  appId: "1:306332234261:web:a991cc5b30c2cfdfda941c",
-                  measurementId: "G-Z185FETY22"
-                };
+                updateStatus('Inicializando Firebase...', 'info');
+                // ID de la app (para las reglas de Firestore)
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'orange-pbloom';
                 
-                // Usar el appId de la configuración para las rutas de la base de datos
-                const appId = firebaseConfig.appId; 
-
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                setLogLevel('debug'); // Útil para desarrollo
-
+                
+                // Habilitar logs detallados de Firestore
+                setLogLevel('Debug');
+                
+                updateStatus('Autenticando...', 'warning');
+                
+                // Manejar estado de autenticación
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
+                        // Usuario ya autenticado (anónimo o con token)
                         userId = user.uid;
-                        console.log("Usuario autenticado:", userId);
-                        
-                        // Actualizar panel de estado
-                        authStatus.innerHTML = `<p>Conectado. ID de Usuario: ${userId}</p>`;
-                        authStatus.classList.add('bg-green-100', 'text-green-700');
-                        authStatus.classList.remove('bg-yellow-100', 'text-yellow-700', 'bg-red-100', 'text-red-700');
-
-                        // Definir la ruta de la colección de INVENTARIO
-                        // Usamos el appId de la configuración
-                        inventoryCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/inventory`);
-                        
-                        // NUEVO: Definir la ruta de la colección de VENTAS
-                        salesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/sales`);
-                        
-                        // Iniciar los listeners
-                        setupInventoryListener();
-                        setupSalesListener(); // NUEVO
-
+                        console.log('Usuario autenticado:', userId);
+                        updateStatus('Conectado y Autenticado', 'success');
+                        // Cargar datos
+                        loadInventory();
+                        loadSalesSummary();
                     } else {
-                        // Si no hay usuario, autenticarse
-                        console.log("Autenticando...");
-                        authStatus.innerHTML = `<p>Autenticando...</p>`;
-                        authStatus.classList.add('bg-yellow-100', 'text-yellow-700');
-
-                        try {
-                            // Mantenemos la lógica de autenticación del canvas/local
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                console.log("Intentando signInWithCustomToken...");
-                                await signInWithCustomToken(auth, __initial_auth_token);
-                            } else {
-                                // Si no estamos en el canvas, nos autenticamos anónimamente
-                                console.log("Intentando signInAnonymously...");
-                                await signInAnonymously(auth);
-                            }
-                        } catch (error) {
-                            console.warn("Falló signInWithCustomToken (esto es normal si no estás en el canvas o el token no coincide):", error.message);
-                            
-                            // CORREGIDO: Añadido 'auth/custom-token-mismatch'
-                            // Si falla el token (normal fuera del canvas) o la config no se encuentra, reintentar con anónimo
-                            if (error.code === 'auth/configuration-not-found' || 
-                                error.code === 'auth/invalid-custom-token' ||
-                                error.code === 'auth/custom-token-mismatch') 
-                            {
-                                console.log("Reintentando con signInAnonymously...");
-                                try {
-                                    await signInAnonymously(auth);
-                                } catch (anonError) {
-                                    console.error("Error de autenticación anónima:", anonError);
-                                    // Mostrar error específico en el panel de estado
-                                    authStatus.innerHTML = `<p><strong>Error de autenticación:</strong> ${anonError.message}. Verifique que 'Autenticación Anónima' esté habilitada en Firebase.</p>`;
-                                    authStatus.classList.add('bg-red-100', 'text-red-700');
-                                    authStatus.classList.remove('bg-yellow-100', 'text-yellow-700');
-                                    receptionError.textContent = "Error de autenticación anónima. Revisa la config. de Firebase.";
-                                }
-                            } else {
-                                console.error("Error de autenticación:", error);
-                                // Mostrar error genérico en el panel de estado
-                                authStatus.innerHTML = `<p><strong>Error de autenticación:</strong> ${error.message}.</p>`;
-                                authStatus.classList.add('bg-red-100', 'text-red-700');
-                                authStatus.classList.remove('bg-yellow-100', 'text-yellow-700');
-                                receptionError.textContent = "Error de autenticación. No se pueden guardar datos.";
-                            }
-                        }
+                        // No hay usuario, intentar autenticar
+                        await attemptSignIn();
                     }
                 });
+
             } catch (error) {
                 console.error("Error inicializando Firebase:", error);
-                // Mostrar un error más descriptivo
-                document.body.innerHTML = `<div style="padding: 2rem; text-align: center; font-family: sans-serif; line-height: 1.6; color: #333;">
-                                                <h1 style="color: #d9534f;">Error Crítico: No se pudo conectar a Firebase.</h1>
-                                                <p style="color: #d9534f; font-weight: bold; background: #f2dede; padding: 1rem; border-radius: 8px; border: 1px solid #ebccd1; display: inline-block; max-width: 800px; text-align: left;">
-                                                    Mensaje: ${error.message}
-                                                </p>
-                                                <p style="margin-top: 1.5rem;">Por favor, revise la consola para más detalles (Presione F12).</p>
-                                                <p>Asegúrese de que la configuración de Firebase sea correcta y que el dominio esté autorizado.</p>
-                                            </div>`;
+                updateStatus(`Error de inicialización: ${error.message}`, 'error');
             }
-
-            // --- FUNCIONES DE FIREBASE (LISTENERS) ---
-
-            /**
-             * Escucha cambios en el inventario en tiempo real
-             */
-            function setupInventoryListener() {
-                if (!inventoryCollectionRef) return;
-                
-                const q = query(inventoryCollectionRef); 
-
-                onSnapshot(q, (snapshot) => {
-                    localInventory = []; // Resetear caché
-                    const inventoryDocs = [];
-                    snapshot.forEach((doc) => {
-                        const lot = { ...doc.data(), id: doc.id };
-                        inventoryDocs.push(lot);
-                        // Añadir solo lotes con stock al caché para ventas
-                        if (lot.netWeight > 0) {
-                            localInventory.push(lot);
-                        }
-                    });
-                    renderInventory(inventoryDocs); // Actualizar tabla principal
-                    populateLotSelect(); // Actualizar dropdown en modal de venta
-                }, (error) => {
-                    console.error("Error al escuchar inventario:", error);
-                });
-            }
-
-            /**
-             * NUEVO: Escucha cambios en las ventas en tiempo real
-             */
-            function setupSalesListener() {
-                if (!salesCollectionRef) return;
-
-                const q = query(salesCollectionRef);
-
-                onSnapshot(q, (snapshot) => {
-                    localSales = []; // Resetear caché de ventas
-                    snapshot.forEach((doc) => {
-                        localSales.push({ ...doc.data(), id: doc.id });
-                    });
-                    renderSalesSummary(localSales); // Actualizar tabla de resumen de ventas
-                }, (error) => {
-                    console.error("Error al escuchar ventas:", error);
-                });
-            }
-
-            // --- FUNCIONES DE UTILIDAD ---
-            const formatCurrency = (value) => {
-                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-            };
-
-            const formatNumber = (value) => {
-                 return new Intl.NumberFormat('es-CL').format(value);
-            };
-            
-            /**
-             * Formatea fecha (objeto Date o string YYYY-MM-DD o Timestamp) a MM/DD/YYYY
-             */
-            const formatDate = (dateInput) => {
-                if (!dateInput) return '';
-                
-                let date;
-                if (dateInput.toDate) { // Es un Timestamp de Firebase
-                    date = dateInput.toDate();
-                } else if (typeof dateInput === 'string') { // Es un string YYYY-MM-DD
-                    const parts = dateInput.split('-');
-                    if (parts.length === 3) {
-                         date = new Date(parts[0], parts[1] - 1, parts[2]);
-                    } else {
-                        return dateInput; // Devolver el string si no es el formato esperado
+        }
+        
+        // Intento de inicio de sesión
+        async function attemptSignIn() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    // 1. Intentar con token de la plataforma
+                    console.log("Intentando signInWithCustomToken...");
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // 2. Intentar anónimamente (si no hay token)
+                    console.log("Intentando signInAnonymously...");
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error('Error de autenticación:', error);
+                // Si falla el token (mismatch), intentar anónimo
+                if (error.code === 'auth/custom-token-mismatch') {
+                    console.warn('Token mismatch, intentando anónimo...');
+                    try {
+                        await signInAnonymously(auth);
+                    } catch (anonError) {
+                        console.error('Error de autenticación anónima:', anonError);
+                        updateStatus('Error de autenticación. Revise la consola (F12).', 'error');
                     }
-                } else if (dateInput instanceof Date) { // Ya es un objeto Date
-                    date = dateInput;
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    // Error común si la autenticación anónima no está habilitada
+                    console.error('La autenticación anónima no está habilitada en Firebase.');
+                    updateStatus('Error: La autenticación anónima no está habilitada en Firebase.', 'error');
                 } else {
-                    return '';
+                    updateStatus(`Error de autenticación: ${error.message}`, 'error');
                 }
+            }
+        }
 
-                // Usar UTC para evitar problemas de zona horaria con las fechas de Firebase
-                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(date.getUTCDate()).padStart(2, '0');
-                const year = date.getUTCFullYear();
-                return `${month}/${day}/${year}`;
-            };
+        // --- Lógica de Recepción (Guardar Inventario) ---
 
+        // Renderizar tabla de inventario
+        function renderInventory(docs) {
+            inventoryTableBody.innerHTML = ''; // Limpiar tabla
+            localInventoryCache.clear(); // Limpiar cache local
 
-            // --- FUNCIONES DE RENDERIZADO ---
+            if (docs.empty) {
+                inventoryTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay materia prima en inventario.</td></tr>';
+                return;
+            }
 
-            /**
-             * Actualiza la tabla del inventario en el HTML
-             */
-            const renderInventory = (inventoryDocs) => {
-                inventoryBody.innerHTML = ''; // Limpiar tabla
-
-                const activeLots = inventoryDocs.filter(lot => lot.netWeight > 0);
-
-                if (activeLots.length === 0) {
-                    inventoryBody.appendChild(emptyInventoryRow);
-                    return;
-                }
-
-                activeLots.forEach(lot => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50';
-                    
-                    tr.innerHTML = `
-                        <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">LOTE-${lot.id.substring(0, 6)}...</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${formatDate(lot.receptionDate)}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${lot.producerName}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${lot.species} ${lot.variety || ''}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">${formatNumber(lot.netWeight)} Kg</td>
-                    `;
-                    inventoryBody.appendChild(tr);
-                });
-            };
-
-            /**
-             * NUEVO: Actualiza la tabla de resumen de ventas
-             */
-            const renderSalesSummary = (sales) => {
-                salesBody.innerHTML = ''; // Limpiar tabla
-
-                if (sales.length === 0) {
-                    salesBody.appendChild(emptySalesRow);
-                    return;
-                }
+            docs.forEach(doc => {
+                const item = doc.data();
+                const lotId = doc.id;
                 
-                // Ordenar por fecha (más nuevas primero) si 'saleDate' es un Timestamp
-                sales.sort((a, b) => b.saleDate.seconds - a.saleDate.seconds);
-
-                sales.forEach(sale => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50';
-                    
-                    tr.innerHTML = `
-                        <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">${sale.invoiceNum}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${formatDate(sale.saleDate)}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${sale.customerName}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">${formatCurrency(sale.totalAmount)}</td>
-                    `;
-                    salesBody.appendChild(tr);
+                // Guardar en cache
+                localInventoryCache.set(lotId, {
+                    description: item.description,
+                    stockKg: item.stockKg
                 });
-            };
 
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lotId}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.producer}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">${formatNumber(item.stockKg)} Kg</td>
+                `;
+                inventoryTableBody.appendChild(tr);
+            });
+        }
+        
+        // Cargar inventario (con listener en tiempo real)
+        function loadInventory() {
+            if (!db || !userId) return;
 
-            /**
-             * Rellena el <select> de lotes en el modal de venta
-             */
-            const populateLotSelect = () => {
-                discountLotSelect.innerHTML = '<option value="">Seleccione un lote</option>';
-                localInventory.forEach(lot => {
-                    const option = document.createElement('option');
-                    option.value = lot.id;
-                    option.textContent = `${lot.producerName} (LOTE-${lot.id.substring(0, 6)}) - ${formatNumber(lot.netWeight)} Kg disp.`;
-                    discountLotSelect.appendChild(option);
-                });
-            };
+            // Desconectar listener anterior si existe
+            if (inventoryListener) inventoryListener();
 
-            // --- FUNCIONES DE MODALES ---
-            const showModal = (modal) => {
-                console.log('Intentando mostrar modal:', modal.id);
-                if (modal) {
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                } else {
-                    console.error('showModal: Modal no encontrado');
-                }
-            };
+            const inventoryCollectionPath = `artifacts/${appId}/users/${userId}/inventory`;
+            const q = query(collection(db, inventoryCollectionPath));
 
-            const hideModals = () => {
-                console.log('Cerrando todos los modales');
-                sellModal.classList.add('hidden');
-                sellModal.classList.remove('flex');
-                invoiceModal.classList.add('hidden');
-                invoiceModal.classList.remove('flex');
-            };
+            console.log("Escuchando en:", inventoryCollectionPath);
+
+            inventoryListener = onSnapshot(q, (snapshot) => {
+                console.log("Inventario actualizado, docs:", snapshot.size);
+                renderInventory(snapshot);
+                // Actualizar los selectores en el modal de venta si está abierto
+                updateInventorySelectors();
+            }, (error) => {
+                console.error("Error al cargar inventario: ", error);
+                inventoryTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar inventario: ${error.message}</td></tr>`;
+            });
+        }
+        
+        // Manejar envío de formulario de recepción
+        async function handleReceptionSubmit(e) {
+            e.preventDefault();
+            if (!db || !userId) {
+                receptionError.textContent = "Error: No hay conexión a la base de datos.";
+                return;
+            }
+            receptionError.textContent = "";
+            const submitButton = document.getElementById('submit-reception');
+            submitButton.disabled = true;
+            submitButton.textContent = "Guardando...";
             
-            const openNewSaleModal = () => {
-                sellForm.reset();
-                document.getElementById('sell-date').valueAsDate = new Date();
-                sellItemsBody.innerHTML = '';
-                sellDiscountsBody.innerHTML = '';
-                sellFormError.textContent = '';
-                lineItemError.textContent = '';
-                discountError.textContent = '';
-                showModal(sellModal);
-            };
+            try {
+                const date = document.getElementById('reception-date').value;
+                const producer = document.getElementById('producer-name').value;
+                const lotName = document.getElementById('lot-name').value;
+                const species = document.getElementById('species').value;
+                const variety = document.getElementById('variety').value;
+                const netWeight = parseFloat(document.getElementById('net-weight').value);
 
-            // --- LÓGICA DE FORMULARIO DE VENTA (MULTI-LÍNEA / MULTI-LOTE) ---
+                if (!date || !producer || !netWeight) {
+                    throw new Error("Fecha, Productor y Peso Neto son obligatorios.");
+                }
 
-            /**
-             * Añade una línea de producto a la tabla del modal de venta
-             */
-            const addInvoiceLine = () => {
-                lineItemError.textContent = '';
-                const desc = document.getElementById('new-line-desc').value;
-                const qty = parseFloat(document.getElementById('new-line-qty').value);
-                const price = parseFloat(document.getElementById('new-line-price').value);
+                const docData = {
+                    date: date,
+                    producer: producer,
+                    description: `${lotName} - ${species} (${variety})`,
+                    stockKg: netWeight,
+                    createdAt: serverTimestamp() 
+                };
 
-                if (!desc || !qty || !price || qty <= 0 || price <= 0) {
-                    lineItemError.textContent = 'Debe rellenar Descripción, Cantidad (>0) y Precio (>0).';
-                    return;
+                const inventoryCollectionPath = `artifacts/${appId}/users/${userId}/inventory`;
+                const docRef = await addDoc(collection(db, inventoryCollectionPath), docData);
+
+                console.log("Recepción guardada con ID: ", docRef.id);
+                receptionForm.reset(); // Limpiar formulario
+                // Restaurar valores por defecto
+                document.getElementById('producer-name').value = "Pinebloom";
+                document.getElementById('lot-name').value = "Pinebloom Orange";
+                document.getElementById('species').value = "Naranjas";
+                document.getElementById('variety').value = "Valencia";
+
+            } catch (error) {
+                console.error("Error al guardar recepción: ", error);
+                receptionError.textContent = `Error: ${error.message}`;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = "Registrar en Inventario";
+            }
+        }
+        
+        // --- Lógica de Venta (Modal y Factura) ---
+
+        // Resetear y abrir el modal de venta
+        function openSaleModal() {
+            saleForm.reset();
+            // Poner valores por defecto
+            document.getElementById('sale-customer').value = "Jacmor Farms";
+            document.getElementById('sale-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('sale-invoice-id').value = "1"; // Debería ser autoincremental o basado en ventas
+            
+            saleProductLines.innerHTML = '';
+            saleInventoryLines.innerHTML = '';
+            saleErrorMessage.textContent = '';
+            
+            // Añadir una línea de producto y una de inventario por defecto
+            addProductLine();
+            addInventoryLine();
+            
+            showModal(saleModal);
+        }
+
+        // Añadir una fila de línea de producto
+        function addProductLine() {
+            const lineId = `product-${Date.now()}`;
+            const div = document.createElement('div');
+            div.id = lineId;
+            div.className = "grid grid-cols-12 gap-2 items-center";
+            div.innerHTML = `
+                <div class="col-span-5">
+                    <label class="text-sm text-gray-600">Descripción</label>
+                    <input type="text" value="2 lb Clams" data-field="description" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                </div>
+                <div class="col-span-2">
+                    <label class="text-sm text-gray-600">Cant.</label>
+                    <input type="number" value="250" data-field="qty" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                </div>
+                <div class="col-span-2">
+                    <label class="text-sm text-gray-600">Precio U.</label>
+                    <input type="number" value="4.00" step="0.01" data-field="price" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                </div>
+                <div class="col-span-2">
+                    <label class="text-sm text-gray-600">Total</label>
+                    <input type="text" value="$1,000.00" data-field="total" class="mt-1 block w-full px-2 py-1 border bg-gray-100 border-gray-300 rounded-md shadow-sm sm:text-sm" readonly>
+                </div>
+                <div class="col-span-1 flex items-end justify-center">
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="mt-5 p-1 text-red-500 hover:text-red-700">&times;</button>
+                </div>
+            `;
+            
+            // Calcular total de línea automáticamente
+            div.addEventListener('input', (e) => {
+                if (e.target.dataset.field === 'qty' || e.target.dataset.field === 'price') {
+                    const qty = parseFloat(div.querySelector('[data-field="qty"]').value) || 0;
+                    const price = parseFloat(div.querySelector('[data-field="price"]').value) || 0;
+                    const totalInput = div.querySelector('[data-field="total"]');
+                    totalInput.value = formatCurrency(qty * price);
+                }
+            });
+
+            saleProductLines.appendChild(div);
+        }
+
+        // Generar el HTML de las opciones del selector de inventario
+        function getInventoryOptionsHTML() {
+            if (localInventoryCache.size === 0) {
+                return '<option value="">No hay lotes en inventario</option>';
+            }
+            let options = '<option value="">Seleccione un lote...</option>';
+            localInventoryCache.forEach((item, lotId) => {
+                options += `<option value="${lotId}">${item.description} (Stock: ${formatNumber(item.stockKg)} Kg)</option>`;
+            });
+            return options;
+        }
+
+        // Añadir una fila de descuento de inventario
+        function addInventoryLine() {
+            const lineId = `inventory-${Date.now()}`;
+            const div = document.createElement('div');
+            div.id = lineId;
+            div.className = "grid grid-cols-12 gap-2 items-center";
+            div.innerHTML = `
+                <div class="col-span-7">
+                    <label class="text-sm text-gray-600">Lote de Materia Prima</label>
+                    <select data-field="lotId" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        ${getInventoryOptionsHTML()}
+                    </select>
+                </div>
+                <div class="col-span-4">
+                    <label class="text-sm text-gray-600">Kg a Descontar</label>
+                    <input type="number" step="0.01" data-field="kgToDiscount" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                </div>
+                <div class="col-span-1 flex items-end justify-center">
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="mt-5 p-1 text-red-500 hover:text-red-700">&times;</button>
+                </div>
+            `;
+            saleInventoryLines.appendChild(div);
+        }
+        
+        // Actualizar selectores si el inventario cambia (llamado por onSnapshot)
+        function updateInventorySelectors() {
+            const selects = saleInventoryLines.querySelectorAll('select[data-field="lotId"]');
+            selects.forEach(select => {
+                const selectedValue = select.value;
+                select.innerHTML = getInventoryOptionsHTML();
+                select.value = selectedValue; // Intentar re-seleccionar el valor anterior
+            });
+        }
+        
+        // --- Lógica de Generación y Confirmación de Factura ---
+
+        // Validar el formulario de venta y recolectar datos
+        function validateAndCollectSaleData() {
+            saleErrorMessage.textContent = '';
+            
+            // 1. Recolectar datos del cliente
+            const customer = document.getElementById('sale-customer').value.trim();
+            const date = document.getElementById('sale-date').value;
+            const invoiceId = document.getElementById('sale-invoice-id').value.trim();
+            
+            if (!customer || !date || !invoiceId) {
+                return { error: "Por favor complete todos los Datos del Cliente (Facturar a, Fecha, Factura #)." };
+            }
+
+            // 2. Recolectar líneas de producto
+            const productLines = [];
+            let subtotal = 0;
+            const productLineElements = saleProductLines.querySelectorAll('div[id^="product-"]');
+            
+            if (productLineElements.length === 0) {
+                return { error: "Debe añadir al menos una Línea de Producto a la venta." };
+            }
+
+            for (const line of productLineElements) {
+                const description = line.querySelector('[data-field="description"]').value.trim();
+                const qty = parseFloat(line.querySelector('[data-field="qty"]').value);
+                const price = parseFloat(line.querySelector('[data-field="price"]').value);
+                
+                if (!description || isNaN(qty) || qty <= 0 || isNaN(price)) {
+                    return { error: "Revise las líneas de producto. Todas deben tener descripción, cantidad válida y precio." };
                 }
                 const lineTotal = qty * price;
+                subtotal += lineTotal;
+                productLines.push({ description, qty, price, lineTotal });
+            }
 
-                const tr = document.createElement('tr');
-                tr.className = 'invoice-line-item';
-                // Guardar datos en el dataset para usarlos al generar la factura
-                tr.dataset.description = desc;
-                tr.dataset.qty = qty;
-                tr.dataset.unitPrice = price;
-                
-                tr.innerHTML = `
-                    <td class="px-2 py-2 text-sm">${desc}</td>
-                    <td class="px-2 py-2 text-sm text-right">${formatNumber(qty)}</td>
-                    <td class="px-2 py-2 text-sm text-right">${formatCurrency(price)}</td>
-                    <td class="px-2 py-2 text-sm text-right">${formatCurrency(lineTotal)}</td>
-                    <td class="px-2 py-2 text-sm text-center">
-                        <button type="button" class="remove-line-btn text-red-600 hover:text-red-800">&times;</button>
-                    </td>
-                `;
-                
-                tr.querySelector('.remove-line-btn').addEventListener('click', () => tr.remove());
-                sellItemsBody.appendChild(tr);
-
-                // Limpiar inputs
-                document.getElementById('new-line-desc').value = '';
-                document.getElementById('new-line-qty').value = '';
-                document.getElementById('new-line-price').value = '';
-            };
-
-            /**
-             * Añade un descuento de lote a la tabla del modal de venta
-             */
-            const addDiscountLine = () => {
-                discountError.textContent = '';
-                const lotId = discountLotSelect.value;
-                const kgDiscount = parseFloat(document.getElementById('discount-kg').value);
-                const selectedLot = localInventory.find(lot => lot.id === lotId);
-
-                if (!selectedLot || !kgDiscount || kgDiscount <= 0) {
-                    discountError.textContent = 'Seleccione un lote e ingrese Kg a descontar (>0).';
-                    return;
-                }
-
-                if (kgDiscount > selectedLot.netWeight) {
-                    discountError.textContent = `Error: No puede descontar ${kgDiscount} Kg. El lote solo tiene ${selectedLot.netWeight} Kg.`;
-                    return;
-                }
-                
-                // Evitar duplicados
-                const existingDiscount = sellDiscountsBody.querySelector(`tr[data-lot-id="${lotId}"]`);
-                if (existingDiscount) {
-                    discountError.textContent = 'Ese lote ya fue añadido. Bórrelo para añadir un nuevo valor.';
-                    return;
-                }
-
-                const tr = document.createElement('tr');
-                tr.className = 'discount-line-item';
-                tr.dataset.lotId = lotId;
-                tr.dataset.kg = kgDiscount;
-                tr.dataset.originalWeight = selectedLot.netWeight; // Guardar peso original
-
-                tr.innerHTML = `
-                    <td class="px-2 py-2 text-sm">LOTE-${lotId.substring(0, 6)}...</td>
-                    <td class="px-2 py-2 text-sm">${selectedLot.producerName}</td>
-                    <td class="px-2 py-2 text-sm text-right">${formatNumber(kgDiscount)} Kg</td>
-                    <td class="px-2 py-2 text-sm text-center">
-                        <button type="button" class="remove-line-btn text-red-600 hover:text-red-800">&times;</button>
-                    </td>
-                `;
-                
-                tr.querySelector('.remove-line-btn').addEventListener('click', () => tr.remove());
-                sellDiscountsBody.appendChild(tr);
-
-                // Limpiar inputs
-                discountLotSelect.value = '';
-                document.getElementById('discount-kg').value = '';
-            };
+            // 3. Recolectar descuentos de inventario
+            const inventoryLines = [];
+            const inventoryLineElements = saleInventoryLines.querySelectorAll('div[id^="inventory-"]');
             
+            if (inventoryLineElements.length === 0) {
+                return { error: "Debe añadir al menos un Lote a Descontar del inventario." };
+            }
+            
+            // Usar un mapa para agrupar descuentos por loteId (si el usuario selecciona el mismo lote varias veces)
+            const kgToDiscountByLot = new Map();
+            for (const line of inventoryLineElements) {
+                const lotId = line.querySelector('[data-field="lotId"]').value;
+                const kgToDiscount = parseFloat(line.querySelector('[data-field="kgToDiscount"]').value);
 
-            /**
-             * Rellena la plantilla de la factura con los datos del formulario
-             */
-            const populateInvoice = (data) => {
-                console.log("Poblando factura con datos:", data);
-                const { customerName, invoiceNum, saleDate, lines } = data;
+                if (!lotId || isNaN(kgToDiscount) || kgToDiscount <= 0) {
+                    return { error: "Revise los descuentos de inventario. Todos deben tener un lote seleccionado y Kg válidos." };
+                }
                 
-                // Rellenar cabecera
-                document.getElementById('inv-date').textContent = formatDate(saleDate);
-                document.getElementById('inv-number').textContent = invoiceNum;
-                document.getElementById('inv-customer').textContent = customerName;
-                document.getElementById('inv-due-date').textContent = formatDate(saleDate);
+                const currentDiscount = kgToDiscountByLot.get(lotId) || 0;
+                kgToDiscountByLot.set(lotId, currentDiscount + kgToDiscount);
+            }
 
-                // Rellenar líneas
-                const itemsBody = document.getElementById('inv-items-body');
-                itemsBody.innerHTML = '';
-                let subtotal = 0;
+            // 4. Validar Stock
+            for (const [lotId, totalKgToDiscount] of kgToDiscountByLot.entries()) {
+                const lotData = localInventoryCache.get(lotId);
+                if (!lotData) {
+                    return { error: `El lote ${lotId} no se encuentra en el inventario local. Espere a que cargue.` };
+                }
+                if (lotData.stockKg < totalKgToDiscount) {
+                    return { error: `Stock insuficiente para el lote ${lotData.description}. Stock: ${lotData.stockKg} Kg, Intenta descontar: ${totalKgToDiscount} Kg.` };
+                }
+                
+                // Si el stock es suficiente, añadir a la lista final
+                const selectElement = saleInventoryLines.querySelector(`select[value="${lotId}"]`);
+                const lotDescription = selectElement ? selectElement.options[selectElement.selectedIndex].text : lotId;
 
-                lines.forEach(line => {
-                    const qty = parseFloat(line.qty);
-                    const unitPrice = parseFloat(line.unitPrice);
-                    const lineTotal = qty * unitPrice;
-                    subtotal += lineTotal;
+                inventoryLines.push({
+                    lotId: lotId,
+                    lotDesc: lotDescription.split(' (Stock:')[0], // Tomar solo la descripción
+                    kgToDiscount: totalKgToDiscount
+                });
+            }
+
+            // 5. Retornar datos validados
+            return {
+                data: {
+                    customer: customer,
+                    date: date,
+                    invoiceId: invoiceId,
+                    productLines: productLines,
+                    inventoryLines: inventoryLines, // Ya agrupados por lote
+                    subtotal: subtotal,
+                    total: subtotal // (asumiendo 0 impuestos)
+                }
+            };
+        }
+
+        // Manejar clic en "Previsualizar Factura"
+        async function handlePreviewInvoice() {
+            console.log("Manejando previsualización de factura...");
+            const { data, error } = validateAndCollectSaleData();
+            
+            if (error) {
+                console.error("Error de validación:", error);
+                saleErrorMessage.textContent = error;
+                // Hacer scroll hasta el error
+                saleModal.querySelector('.modal-content').scrollTop = saleModal.querySelector('.modal-content').scrollHeight;
+                return;
+            }
+
+            // Guardar datos validados en la variable global
+            currentSaleData = data;
+            
+            // Renderizar la factura en el modal
+            renderInvoicePreview(currentSaleData);
+            
+            // Ocultar modal de venta y mostrar modal de factura
+            closeModal(saleModal);
+            showModal(invoiceModal);
+            
+            // Limpiar errores anteriores
+            invoiceConfirmError.textContent = '';
+            confirmAndSaveBtn.disabled = false;
+            confirmAndSaveBtn.textContent = 'Confirmar y Guardar Venta';
+        }
+
+        // Renderizar la previsualización de la factura
+        function renderInvoicePreview(data) {
+            console.log("Renderizando previsualización:", data);
+            
+            // Metadatos
+            document.getElementById('invoice-date-val').textContent = data.date;
+            document.getElementById('invoice-id-val').textContent = data.invoiceId;
+            document.getElementById('invoice-customer-val').textContent = data.customer;
+
+            // Líneas de producto
+            const itemsBody = document.getElementById('invoice-items-body');
+            itemsBody.innerHTML = '';
+            data.productLines.forEach(line => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatNumber(line.qty)}</td>
+                    <td>${line.description}</td>
+                    <td class="text-right">${formatCurrency(line.price)}</td>
+                    <td class="text-right">${formatCurrency(line.lineTotal)}</td>
+                `;
+                itemsBody.appendChild(tr);
+            });
+
+            // Rellenar con líneas vacías para que se parezca al formato
+            const emptyRows = 10 - data.productLines.length;
+            for (let i = 0; i < emptyRows; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td>&nbsp;</td><td></td><td></td><td></td>';
+                // Añadir estilo de borde a todas menos la última
+                if (i < emptyRows - 1) {
+                    tr.style.borderBottom = '1px solid #ccc';
+                }
+                itemsBody.appendChild(tr);
+            }
+
+            // Totales
+            document.getElementById('invoice-subtotal-val').textContent = formatCurrency(data.subtotal);
+            document.getElementById('invoice-total-val').textContent = formatCurrency(data.total);
+        }
+
+        // Manejar clic en "Confirmar y Guardar Venta"
+        async function handleConfirmAndSaveSale() {
+            console.log("Confirmando y guardando venta...");
+            if (!db || !userId || !currentSaleData) {
+                invoiceConfirmError.textContent = 'Error: No hay conexión o datos de venta.';
+                return;
+            }
+
+            confirmAndSaveBtn.disabled = true;
+            confirmAndSaveBtn.textContent = 'Guardando...';
+            invoiceConfirmError.textContent = '';
+
+            try {
+                // Usar una transacción de Firestore para asegurar consistencia
+                await runTransaction(db, async (transaction) => {
+                    const inventoryRefs = new Map();
+                    const inventoryDocs = new Map();
                     
-                    itemsBody.innerHTML += `
-                        <tr>
-                            <td class="py-3 px-1">${formatNumber(qty)}</td>
-                            <td class="py-3 px-1">${line.description}</td>
-                            <td class="py-3 px-1 text-right">${formatCurrency(unitPrice)}</td>
-                            <td class="py-3 px-1 text-right">${formatCurrency(lineTotal)}</td>
-                        </tr>
-                    `;
+                    // 1. Obtener todos los documentos de inventario necesarios
+                    for (const line of currentSaleData.inventoryLines) {
+                        const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, line.lotId);
+                        inventoryRefs.set(line.lotId, docRef);
+                        const invDoc = await transaction.get(docRef);
+                        if (!invDoc.exists()) {
+                            throw new Error(`Error: El lote ${line.lotId} no existe.`);
+                        }
+                        inventoryDocs.set(line.lotId, invDoc);
+                    }
+
+                    // 2. Validar stock (doble chequeo dentro de la transacción)
+                    for (const line of currentSaleData.inventoryLines) {
+                        const invDoc = inventoryDocs.get(line.lotId);
+                        const currentStock = invDoc.data().stockKg;
+                        if (currentStock < line.kgToDiscount) {
+                            throw new Error(`Stock insuficiente para ${invDoc.data().description}. Stock: ${currentStock} Kg, Requerido: ${line.kgToDiscount} Kg.`);
+                        }
+                    }
+
+                    // 3. Actualizar (descontar) el inventario
+                    for (const line of currentSaleData.inventoryLines) {
+                        const docRef = inventoryRefs.get(line.lotId);
+                        const invDoc = inventoryDocs.get(line.lotId);
+                        const newStock = invDoc.data().stockKg - line.kgToDiscount;
+                        transaction.update(docRef, { stockKg: newStock });
+                    }
+
+                    // 4. Guardar el registro de la venta
+                    const saleDocData = {
+                        ...currentSaleData,
+                        createdAt: serverTimestamp()
+                    };
+                    const salesCollectionPath = `artifacts/${appId}/users/${userId}/sales`;
+                    const newSaleRef = doc(collection(db, salesCollectionPath)); // Crear referencia para obtener ID
+                    transaction.set(newSaleRef, saleDocData);
+                    
+                    console.log("Transacción exitosa. Venta guardada con ID:", newSaleRef.id);
+                    // Actualizar el ID de factura para el PDF
+                    currentSaleData.generatedSaleId = newSaleRef.id;
                 });
 
-                // Rellenar totales
-                const salesTax = 0; // Se puede añadir lógica si es necesario
-                const total = subtotal + salesTax;
-                document.getElementById('inv-subtotal').textContent = formatCurrency(subtotal);
-                document.getElementById('inv-sales-tax').textContent = formatCurrency(salesTax);
-                document.getElementById('inv-total').textContent = formatCurrency(total);
+                // 5. Si la transacción fue exitosa, generar y descargar el PDF
+                downloadPdf();
                 
-                console.log("Factura poblada, mostrando modal #invoice-modal");
-                showModal(invoiceModal);
+                // 6. Cerrar modal y limpiar
+                closeModal(invoiceModal);
+                currentSaleData = {}; // Limpiar datos de venta
+
+            } catch (error) {
+                console.error("Error en la transacción de venta:", error);
+                invoiceConfirmError.textContent = `Error: ${error.message}`;
+                confirmAndSaveBtn.disabled = false;
+                confirmAndSaveBtn.textContent = 'Confirmar y Guardar Venta';
+            }
+        }
+        
+        // Generar y descargar el PDF
+        function downloadPdf() {
+            console.log("Generando PDF...");
+            const element = document.getElementById('invoice-preview');
+            const opt = {
+                margin:       0.5,
+                filename:     `Factura_${currentSaleData.invoiceId}_${currentSaleData.customer}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-
-            /**
-             * Descarga el PDF usando html2pdf.js
-             */
-            const downloadPDF = () => {
-                const invoiceElement = document.getElementById('invoice-to-print');
-                const invoiceNum = document.getElementById('inv-number').textContent;
-                const customer = document.getElementById('inv-customer').textContent;
-
-                const opt = {
-                    margin:       0.5,
-                    filename:     `Factura_${invoiceNum}_${customer}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2 },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-                };
-
-                downloadPdfBtn.textContent = 'Generando...';
-                downloadPdfBtn.disabled = true;
-
-                html2pdf().from(invoiceElement).set(opt).save().then(() => {
-                    downloadPdfBtn.textContent = 'Descargar PDF';
-                    downloadPdfBtn.disabled = false;
-                    hideModals();
-                    sellForm.reset();
-                });
-            };
-
-            /**
-             * NUEVO: Lógica para descargar el resumen de ventas como CSV
-             */
             
-            // Función auxiliar para escapar valores para CSV
-            const escapeCSV = (val) => {
-                if (val == null) return '""';
-                let str = String(val);
-                str = str.replace(/"/g, '""'); // Escapar comillas dobles
-                return `"${str}"`; // Envolver en comillas
-            };
+            // Clonar el elemento para asegurar que el estilo sea correcto para el PDF
+            const elementToPrint = element.cloneNode(true);
+            elementToPrint.style.maxWidth = '7.5in'; // Ancho de hoja carta (8.5) menos márgenes (1.0)
+            elementToPrint.style.padding = '0'; // Padding ya está en el contenedor de PDF
+            elementToPrint.style.boxShadow = 'none';
+            elementToPrint.style.border = 'none';
 
-            const downloadExcel = () => {
-                if (localSales.length === 0) {
-                    alert('No hay ventas para exportar.');
-                    return;
-                }
-
-                // Encabezados (similares a la imagen de ejemplo)
-                let csvContent = "data:text/csv;charset=utf-8,";
-                const headers = [
-                    "Invoice #",
-                    "Fecha",
-                    "Cliente",
-                    "Packaging (Descripcion)",
-                    "Cantidad (Cajas)",
-                    "Precio Unitario",
-                    "Monto Linea",
-                    "Lotes Descontados (Kg)" // Columna extra para trazabilidad
-                ];
-                csvContent += headers.join(",") + "\r\n";
-
-                // Generar filas (una por CADA LÍNEA de CADA VENTA)
-                localSales.forEach(sale => {
-                    // Combinar los descuentos en un solo string para esta venta
-                    const discountSummary = sale.discounts
-                        .map(d => `LOTE-${d.lotId.substring(0,6)} (${d.kg} Kg)`)
-                        .join('; ');
-
-                    sale.lines.forEach(line => {
-                        const lineTotal = parseFloat(line.qty) * parseFloat(line.unitPrice);
-                        const row = [
-                            escapeCSV(sale.invoiceNum),
-                            escapeCSV(formatDate(sale.saleDate)),
-                            escapeCSV(sale.customerName),
-                            escapeCSV(line.description),
-                            line.qty,
-                            line.unitPrice,
-                            lineTotal.toFixed(2),
-                            escapeCSV(discountSummary) // Añadir el resumen de descuentos en cada línea
-                        ];
-                        csvContent += row.join(",") + "\r\n";
-                    });
-                });
-
-                // Crear y descargar el archivo
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "resumen_ventas.csv");
-                document.body.appendChild(link); 
-                link.click();
-                document.body.removeChild(link);
-            };
+            // Añadir el clon temporalmente al body para que html2pdf lo renderice
+            document.body.appendChild(elementToPrint);
+            
+            html2pdf().from(elementToPrint).set(opt).save().then(() => {
+                // Remover el clon después de generar el PDF
+                document.body.removeChild(elementToPrint);
+                console.log("PDF generado y descargado.");
+            });
+        }
 
 
-            // --- EVENT LISTENERS ---
+        // --- Lógica de Resumen de Ventas y CSV ---
+        
+        let localSalesCache = []; // Cache local de ventas para CSV
 
-            // 1. Registrar Recepción (Materia Prima)
-            receptionForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                receptionError.textContent = '';
-                
-                const netWeight = parseFloat(document.getElementById('net-weight').value);
-                if (!netWeight || netWeight <= 0) {
-                    receptionError.textContent = 'El Peso Neto (Kg) debe ser mayor a 0.';
-                    return;
-                }
-                
-                if (!inventoryCollectionRef) {
-                    receptionError.textContent = 'Error: No hay conexión a la base de datos.';
-                    return;
-                }
+        // Renderizar tabla de resumen de ventas
+        function renderSalesSummary(docs) {
+            salesSummaryTableBody.innerHTML = ''; // Limpiar tabla
+            localSalesCache = []; // Limpiar cache local
 
-                const newLot = {
-                    receptionDate: Timestamp.fromDate(document.getElementById('reception-date').valueAsDate),
-                    producerName: document.getElementById('producer-name').value,
-                    farmName: document.getElementById('farm-name').value,
-                    species: document.getElementById('species').value,
-                    variety: document.getElementById('variety').value,
-                    netWeight: netWeight,
-                };
-                
-                try {
-                    await addDoc(inventoryCollectionRef, newLot);
-                    receptionForm.reset();
-                    document.getElementById('species').value = "Naranjas";
-                    document.getElementById('reception-date').valueAsDate = new Date();
-                } catch (error) {
-                    console.error("Error al guardar en Firestore:", error);
-                    receptionError.textContent = 'Error al guardar el lote. Intente de nuevo.';
-                }
+            if (docs.empty) {
+                salesSummaryTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td></tr>';
+                return;
+            }
+            
+            const sales = [];
+            docs.forEach(doc => {
+                sales.push({ id: doc.id, ...doc.data() });
             });
             
-            // 2. Abrir modal de nueva venta
-            newSaleBtn.addEventListener('click', openNewSaleModal);
+            // Guardar en cache para CSV
+            localSalesCache = sales;
 
-            // 3. Añadir línea de producto en modal
-            addInvoiceLineBtn.addEventListener('click', addInvoiceLine);
+            sales.forEach(sale => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.invoiceId}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.customer}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.productLines.length}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">${formatCurrency(sale.total)}</td>
+                `;
+                salesSummaryTableBody.appendChild(tr);
+            });
+        }
 
-            // 4. Añadir descuento de lote en modal
-            addDiscountBtn.addEventListener('click', addDiscountLine);
+        // Cargar resumen de ventas (con listener en tiempo real)
+        function loadSalesSummary() {
+            if (!db || !userId) return;
 
-            // 5. Enviar Formulario de Venta (Previsualizar Factura)
-            sellForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                console.log('Formulario de venta enviado. Iniciando validaciones...');
-                sellFormError.textContent = '';
-                
-                // Recolectar líneas y descuentos
-                const invoiceLines = Array.from(sellItemsBody.querySelectorAll('.invoice-line-item')).map(tr => tr.dataset);
-                const discounts = Array.from(sellDiscountsBody.querySelectorAll('.discount-line-item')).map(tr => tr.dataset);
+            // Desconectar listener anterior si existe
+            if (salesListener) salesListener();
 
-                // Validaciones
-                if (invoiceLines.length === 0) {
-                    sellFormError.textContent = 'Debe añadir al menos una línea de producto a la factura.';
-                    console.warn('Validación fallida: Sin líneas de producto');
-                    sellForm.scroll(0, sellForm.scrollHeight); // Hacer scroll al error
-                    return;
-                }
-                if (discounts.length === 0) {
-                    sellFormError.textContent = 'Debe añadir al menos un descuento de lote del inventario.';
-                    console.warn('Validación fallida: Sin descuentos de lote');
-                    sellForm.scroll(0, sellForm.scrollHeight); // Hacer scroll al error
-                    return;
-                }
-                
-                console.log('Validaciones OK. Procesando descuentos en BBDD...');
-                
-                // Procesar descuentos en BBDD
-                try {
-                    for (const discount of discounts) {
-                        const lotId = discount.lotId;
-                        const kgToDiscount = parseFloat(discount.kg);
-                        
-                        // Doble chequeo por si el stock cambió
-                        const currentLot = localInventory.find(l => l.id === lotId);
-                        if (!currentLot || currentLot.netWeight < kgToDiscount) {
-                             throw new Error(`Stock insuficiente en LOTE-${lotId.substring(0,6)}`);
-                        }
+            const salesCollectionPath = `artifacts/${appId}/users/${userId}/sales`;
+            const q = query(collection(db, salesCollectionPath));
 
-                        const newWeight = currentLot.netWeight - kgToDiscount;
-                        const docRef = doc(inventoryCollectionRef, lotId);
-                        await updateDoc(docRef, { netWeight: newWeight });
+            console.log("Escuchando ventas en:", salesCollectionPath);
+
+            salesListener = onSnapshot(q, (snapshot) => {
+                console.log("Resumen de ventas actualizado, docs:", snapshot.size);
+                renderSalesSummary(snapshot);
+            }, (error) => {
+                console.error("Error al cargar resumen de ventas: ", error);
+                salesSummaryTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar ventas: ${error.message}</td></tr>`;
+            });
+        }
+        
+        // Función para descargar CSV
+        function downloadCSV() {
+            if (localSalesCache.length === 0) {
+                alert("No hay ventas para exportar.");
+                return;
+            }
+
+            // Encabezados (similares a la imagen de ejemplo)
+            const headers = [
+                "Invoice #", "Date", "Bill to", "Variety", "Packaging", 
+                "Pounds", "Boxes", "Price Each", "Amount"
+                // Añadimos campos extra para trazabilidad
+                ,"Lote Descontado ID", "Lote Descontado Desc", "Kg Descontados"
+            ];
+            
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+            // Procesar cada venta
+            localSalesCache.forEach(sale => {
+                // Crear una fila por CADA línea de producto
+                sale.productLines.forEach((line, index) => {
+                    // Para el CSV, imitamos la estructura de la imagen
+                    const variety = line.description.includes("Kishu") ? "CITRUS Kishu" : 
+                                    line.description.includes("Tango") ? "CITRUS Tango" : 
+                                    line.description.includes("Cara") ? "CITRUS Cara" : "N/A";
+                    const packaging = line.description;
+                    const pounds = (line.qty * parseFloat(line.description)) || 0; // Asumir que "2 lb" está en la desc
+                    const boxes = line.qty;
+                    const priceEach = line.price;
+                    const amount = line.lineTotal;
+                    
+                    // Para la primera línea de producto, mostrar el detalle del primer descuento de inventario
+                    // Para las siguientes, dejarlas en blanco para evitar duplicados
+                    let lotId = '';
+                    let lotDesc = '';
+                    let kgDiscount = '';
+
+                    if (index < sale.inventoryLines.length) {
+                        const invLine = sale.inventoryLines[index];
+                        lotId = `"${invLine.lotId}"`;
+                        lotDesc = `"${invLine.lotDesc}"`;
+                        kgDiscount = invLine.kgToDiscount;
                     }
                     
-                    console.log('Descuentos aplicados. Preparando registro de venta...');
-
-                    // Preparar datos para la factura Y para guardar la venta
-                    const saleDate = document.getElementById('sell-date').valueAsDate;
-                    const totalAmount = invoiceLines.reduce((acc, line) => {
-                        return acc + (parseFloat(line.qty) * parseFloat(line.unitPrice));
-                    }, 0);
-
-                    const saleRecord = {
-                        customerName: document.getElementById('sell-customer').value,
-                        invoiceNum: document.getElementById('sell-invoice-num').value,
-                        saleDate: Timestamp.fromDate(saleDate), // Guardar como Timestamp
-                        lines: invoiceLines,
-                        discounts: discounts,
-                        totalAmount: totalAmount
-                    };
-
-                    // NUEVO: Guardar el registro de la venta en Firestore
-                    await addDoc(salesCollectionRef, saleRecord);
-                    console.log('Registro de venta guardado en Firestore.');
-
-                    // Preparar datos para el PDF (usa 'saleDate' como objeto Date, no Timestamp)
-                    const invoiceDataForPDF = { ...saleRecord, saleDate: saleDate };
+                    const row = [
+                        sale.invoiceId,
+                        sale.date,
+                        `"${sale.customer}"`,
+                        variety,
+                        `"${packaging}"`,
+                        pounds,
+                        boxes,
+                        priceEach,
+                        amount,
+                        lotId,
+                        lotDesc,
+                        kgDiscount
+                    ];
                     
-                    hideModals(); // Ocultar modal de venta
-                    populateInvoice(invoiceDataForPDF); // Poblar y mostrar modal de factura
-
-                } catch (error) {
-                    console.error("Error al procesar la venta:", error);
-                    sellFormError.textContent = `Error: ${error.message}. La venta no se procesó.`;
-                    sellForm.scroll(0, sellForm.scrollHeight); // Hacer scroll al error
-                }
+                    csvContent += row.join(",") + "\n";
+                });
             });
 
-            // 6. Descargar PDF
-            downloadPdfBtn.addEventListener('click', downloadPDF);
+            // Crear y descargar el archivo
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "resumen_de_ventas.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // --- Asignación de Eventos (Event Listeners) ---
+        
+        window.addEventListener('load', initFirebase);
+        
+        receptionForm.addEventListener('submit', handleReceptionSubmit);
+        
+        // Modales
+        openSaleModalBtn.addEventListener('click', openSaleModal);
+        closeSaleModalBtn.addEventListener('click', () => closeModal(saleModal));
+        closeInvoiceModalBtn.addEventListener('click', () => closeModal(invoiceModal));
+        
+        // Botones del modal de venta
+        addProductLineBtn.addEventListener('click', addProductLine);
+        addInventoryLineBtn.addEventListener('click', addInventoryLine);
+        previewInvoiceBtn.addEventListener('click', handlePreviewInvoice);
+        
+        // Botón de confirmación (modal de factura)
+        confirmAndSaveBtn.addEventListener('click', handleConfirmAndSaveSale);
 
-            // 7. NUEVO: Descargar Excel
-            downloadExcelBtn.addEventListener('click', downloadExcel);
+        // Botón CSV
+        downloadCsvBtn.addEventListener('click', downloadCSV);
 
-            // 8. Cerrar Modales
-            closeModalBtns.forEach(btn => {
-                btn.addEventListener('click', hideModals);
-            });
-            
-            // --- INICIALIZACIÓN ---
-            document.getElementById('reception-date').valueAsDate = new Date();
-        });
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            if (event.target == saleModal) {
+                closeModal(saleModal);
+            }
+            if (event.target == invoiceModal) {
+                closeModal(invoiceModal);
+            }
+        }
+        
     </script>
 </body>
 </html>
-
