@@ -14,7 +14,111 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
-/* ... existing code ... -->
+         /* Estilos para la factura (imitando la imagen) */
+         #invoice-to-print {
+            width: 100%;
+            /* Ajustado: Reducido de 800px a 750px para asegurar que quepa en hoja carta */
+            max-width: 750px; 
+            margin: 0 auto;
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            background-color: #fff;
+            border: 1px solid #e5e7eb; /* Opcional: borde suave para la vista previa */
+         }
+         #invoice-to-print header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2.5rem; /* mb-10 */
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ccc;
+         }
+         #invoice-to-print .company-details {
+            font-size: 0.875rem; /* 14px */
+            line-height: 1.4;
+         }
+         #invoice-to-print .company-details p {
+            margin: 0;
+         }
+         #invoice-to-print .invoice-details h1 {
+            font-size: 2.25rem; /* 36px */
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            text-align: right;
+            color: #374151; /* text-gray-700 */
+         }
+         #invoice-to-print .invoice-details p {
+            text-align: right;
+            font-size: 0.875rem; /* 14px */
+            margin: 0;
+         }
+         #invoice-to-print .invoice-details p strong {
+            margin-right: 0.5rem;
+         }
+         
+         #invoice-to-print .to-section {
+            margin-bottom: 1.5rem; /* mb-6 */
+            font-size: 0.875rem;
+         }
+         #invoice-to-print .to-section p {
+            font-size: 0.75rem; /* 12px */
+            text-transform: uppercase;
+            color: #4b5563; /* text-gray-600 */
+            margin-bottom: 0.25rem;
+         }
+         
+         #invoice-to-print .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem; /* 14px */
+         }
+         #invoice-to-print .invoice-table th,
+         #invoice-to-print .invoice-table td {
+            border: 1px solid #ccc;
+            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+         }
+         #invoice-to-print .invoice-table th {
+            background-color: #e5e7eb; /* bg-gray-200 */
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 0.75rem; /* 12px */
+            color: #374151;
+         }
+         
+         /* Alineación específica para la tabla de items */
+         #invoice-to-print .invoice-table thead th.text-right,
+         #invoice-to-print .invoice-table tbody td.text-right {
+             text-align: right;
+         }
+
+         #invoice-to-print .totals-section {
+            margin-top: 2rem; /* mt-8 */
+            display: flex;
+            justify-content: flex-end;
+         }
+         #invoice-to-print .totals-table {
+            width: 100%;
+            max-width: 300px; /* Ancho max para la tabla de totales */
+            border-collapse: collapse;
+            font-size: 0.875rem; /* 14px */
+         }
+         #invoice-to-print .totals-table td {
+            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+            border: 1px solid #ccc;
+         }
+         #invoice-to-print .totals-table td.label {
+            text-align: right;
+            font-weight: 600; /* semibold */
+            color: #4b5563; /* text-gray-600 */
+            background-color: #f9fafb; /* bg-gray-50 */
+         }
+         #invoice-to-print .totals-table td.label.total {
+             font-weight: bold;
+             color: #000;
+             font-size: 1rem; /* 16px */
+         }
+         
          #invoice-to-print .footer-note {
             margin-top: 3rem; /* mt-12 */
             text-align: center;
@@ -31,6 +135,11 @@
             <h1 class="text-3xl font-bold text-gray-900">Sistema de Recepción y Venta</h1>
             <p class="text-gray-600">Gestión de inventario de materia prima y generación de facturas de venta.</p>
         </header>
+
+        <!-- NUEVO: Panel de Estado de Autenticación -->
+        <div id="auth-status" class="mb-6 p-4 rounded-md text-sm font-medium text-center bg-yellow-100 text-yellow-700">
+            <p>Conectando a la base de datos...</p>
+        </div>
 
         <!-- Sección 1: Formulario de Recepción -->
         <section id="form-container" class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -396,6 +505,9 @@
             const emptySalesRow = document.getElementById('empty-sales-row');
             const downloadExcelBtn = document.getElementById('download-excel-btn');
 
+            // NUEVO: Selector de estado de autenticación
+            const authStatus = document.getElementById('auth-status');
+
 
             // --- INICIALIZACIÓN DE FIREBASE ---
             try {
@@ -423,6 +535,11 @@
                         userId = user.uid;
                         console.log("Usuario autenticado:", userId);
                         
+                        // Actualizar panel de estado
+                        authStatus.innerHTML = `<p>Conectado. ID de Usuario: ${userId}</p>`;
+                        authStatus.classList.add('bg-green-100', 'text-green-700');
+                        authStatus.classList.remove('bg-yellow-100', 'text-yellow-700', 'bg-red-100', 'text-red-700');
+
                         // Definir la ruta de la colección de INVENTARIO
                         // Usamos el appId de la configuración
                         inventoryCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/inventory`);
@@ -437,6 +554,9 @@
                     } else {
                         // Si no hay usuario, autenticarse
                         console.log("Autenticando...");
+                        authStatus.innerHTML = `<p>Autenticando...</p>`;
+                        authStatus.classList.add('bg-yellow-100', 'text-yellow-700');
+
                         try {
                             // Mantenemos la lógica de autenticación del canvas/local
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -448,18 +568,31 @@
                                 await signInAnonymously(auth);
                             }
                         } catch (error) {
-                            console.warn("Falló signInWithCustomToken (esto es normal si no estás en el canvas):", error.message);
+                            console.warn("Falló signInWithCustomToken (esto es normal si no estás en el canvas o el token no coincide):", error.message);
+                            
+                            // CORREGIDO: Añadido 'auth/custom-token-mismatch'
                             // Si falla el token (normal fuera del canvas) o la config no se encuentra, reintentar con anónimo
-                            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/invalid-custom-token') {
+                            if (error.code === 'auth/configuration-not-found' || 
+                                error.code === 'auth/invalid-custom-token' ||
+                                error.code === 'auth/custom-token-mismatch') 
+                            {
                                 console.log("Reintentando con signInAnonymously...");
                                 try {
                                     await signInAnonymously(auth);
                                 } catch (anonError) {
                                     console.error("Error de autenticación anónima:", anonError);
+                                    // Mostrar error específico en el panel de estado
+                                    authStatus.innerHTML = `<p><strong>Error de autenticación:</strong> ${anonError.message}. Verifique que 'Autenticación Anónima' esté habilitada en Firebase.</p>`;
+                                    authStatus.classList.add('bg-red-100', 'text-red-700');
+                                    authStatus.classList.remove('bg-yellow-100', 'text-yellow-700');
                                     receptionError.textContent = "Error de autenticación anónima. Revisa la config. de Firebase.";
                                 }
                             } else {
                                 console.error("Error de autenticación:", error);
+                                // Mostrar error genérico en el panel de estado
+                                authStatus.innerHTML = `<p><strong>Error de autenticación:</strong> ${error.message}.</p>`;
+                                authStatus.classList.add('bg-red-100', 'text-red-700');
+                                authStatus.classList.remove('bg-yellow-100', 'text-yellow-700');
                                 receptionError.textContent = "Error de autenticación. No se pueden guardar datos.";
                             }
                         }
@@ -638,11 +771,17 @@
 
             // --- FUNCIONES DE MODALES ---
             const showModal = (modal) => {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                console.log('Intentando mostrar modal:', modal.id);
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                } else {
+                    console.error('showModal: Modal no encontrado');
+                }
             };
 
             const hideModals = () => {
+                console.log('Cerrando todos los modales');
                 sellModal.classList.add('hidden');
                 sellModal.classList.remove('flex');
                 invoiceModal.classList.add('hidden');
@@ -757,6 +896,7 @@
              * Rellena la plantilla de la factura con los datos del formulario
              */
             const populateInvoice = (data) => {
+                console.log("Poblando factura con datos:", data);
                 const { customerName, invoiceNum, saleDate, lines } = data;
                 
                 // Rellenar cabecera
@@ -793,6 +933,7 @@
                 document.getElementById('inv-sales-tax').textContent = formatCurrency(salesTax);
                 document.getElementById('inv-total').textContent = formatCurrency(total);
                 
+                console.log("Factura poblada, mostrando modal #invoice-modal");
                 showModal(invoiceModal);
             };
 
@@ -939,6 +1080,7 @@
             // 5. Enviar Formulario de Venta (Previsualizar Factura)
             sellForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                console.log('Formulario de venta enviado. Iniciando validaciones...');
                 sellFormError.textContent = '';
                 
                 // Recolectar líneas y descuentos
@@ -948,13 +1090,19 @@
                 // Validaciones
                 if (invoiceLines.length === 0) {
                     sellFormError.textContent = 'Debe añadir al menos una línea de producto a la factura.';
+                    console.warn('Validación fallida: Sin líneas de producto');
+                    sellForm.scroll(0, sellForm.scrollHeight); // Hacer scroll al error
                     return;
                 }
                 if (discounts.length === 0) {
                     sellFormError.textContent = 'Debe añadir al menos un descuento de lote del inventario.';
+                    console.warn('Validación fallida: Sin descuentos de lote');
+                    sellForm.scroll(0, sellForm.scrollHeight); // Hacer scroll al error
                     return;
                 }
-
+                
+                console.log('Validaciones OK. Procesando descuentos en BBDD...');
+                
                 // Procesar descuentos en BBDD
                 try {
                     for (const discount of discounts) {
@@ -972,6 +1120,8 @@
                         await updateDoc(docRef, { netWeight: newWeight });
                     }
                     
+                    console.log('Descuentos aplicados. Preparando registro de venta...');
+
                     // Preparar datos para la factura Y para guardar la venta
                     const saleDate = document.getElementById('sell-date').valueAsDate;
                     const totalAmount = invoiceLines.reduce((acc, line) => {
@@ -989,17 +1139,18 @@
 
                     // NUEVO: Guardar el registro de la venta en Firestore
                     await addDoc(salesCollectionRef, saleRecord);
+                    console.log('Registro de venta guardado en Firestore.');
 
                     // Preparar datos para el PDF (usa 'saleDate' como objeto Date, no Timestamp)
                     const invoiceDataForPDF = { ...saleRecord, saleDate: saleDate };
                     
-                    populateInvoice(invoiceDataForPDF);
-                    hideModals(); // Ocultar modal de venta, mostrar el de factura
-                    showModal(invoiceModal);
+                    hideModals(); // Ocultar modal de venta
+                    populateInvoice(invoiceDataForPDF); // Poblar y mostrar modal de factura
 
                 } catch (error) {
                     console.error("Error al procesar la venta:", error);
                     sellFormError.textContent = `Error: ${error.message}. La venta no se procesó.`;
+                    sellForm.scroll(0, sellForm.scrollHeight); // Hacer scroll al error
                 }
             });
 
