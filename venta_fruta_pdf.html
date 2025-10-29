@@ -36,13 +36,13 @@
         #invoice-to-print {
             font-family: 'Times New Roman', Times, serif;
             color: #111827; /* text-gray-900 */
-            /* width: 800px; */ /* <-- AJUSTE AQUÍ */
-            width: 100%;     /* <-- AJUSTE AQUÍ */
-            max-width: 800px;/* <-- AJUSTE AQUÍ */
+            width: 100%;
+            max-width: 700px;/* <-- AJUSTE AQUÍ (de 800px a 700px) */
             margin: 0 auto;
             border: 1px solid #e5e7eb; /* border-gray-200 */
-            padding: 2.5rem; /* p-10 */
+            padding: 2rem; /* <-- AJUSTE AQUÍ (de 2.5rem a 2rem) */
             background-color: #ffffff;
+            box-sizing: border-box; /* <-- AJUSTE AQUÍ (añadido por seguridad) */
         }
         #invoice-to-print h1 {
             font-size: 3rem; /* 48px */
@@ -355,7 +355,7 @@
                             </tr>
                             <tr>
                                 <td class="label total">TOTAL</td>
-                                <td class="text-right total" id="inv-total">$1000.00</td>
+                                <td class="text-right" id="inv-total">$1000.00</td>
                             </tr>
                         </tbody>
                     </table>
@@ -669,3 +669,4 @@
     </script>
 </body>
 </html>
+
