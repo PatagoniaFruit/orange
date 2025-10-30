@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Carga html2pdf.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" 
-            integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" 
+            xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" 
             crossorigin="anonymous" 
             referrerpolicy="no-referrer"></script>
             
@@ -132,6 +132,14 @@
             height: 100%;
             overflow: auto;
             background-color: rgba(0,0,0,0.6);
+            /* Transición */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
         }
         .modal-content {
             background-color: #fefefe;
@@ -142,6 +150,12 @@
             width: 95%;
             max-width: 1000px;
             position: relative;
+            /* Transición */
+            transform: translateY(-50px);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content {
+            transform: translateY(0);
         }
         .modal-body {
             max-height: 80vh;
@@ -161,6 +175,16 @@
         .modal-close:focus {
             color: black;
             text-decoration: none;
+        }
+        /* Estilo para botones de acción en tablas */
+        .action-btn {
+            @apply py-1 px-2 rounded-md text-xs font-medium;
+        }
+        .edit-btn {
+            @apply bg-yellow-100 text-yellow-800 hover:bg-yellow-200;
+        }
+        .delete-btn {
+            @apply bg-red-100 text-red-800 hover:bg-red-200;
         }
     </style>
 </head>
@@ -249,12 +273,13 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productor</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock (Kg)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-table-body" class="bg-white divide-y divide-gray-200">
                         <!-- Filas de inventario se insertan aquí -->
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay materia prima en inventario.</td>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay materia prima en inventario.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -278,12 +303,13 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Líneas</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="sales-summary-table-body" class="bg-white divide-y divide-gray-200">
                         <!-- Filas de ventas se insertan aquí -->
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -443,6 +469,60 @@
         </div>
     </div>
 
+    <!-- Modal para Editar Inventario -->
+    <div id="edit-inventory-modal" class="modal">
+        <div class="modal-content max-w-2xl">
+            <span id="close-edit-inventory-modal" class="modal-close">&times;</span>
+            <h2 class="text-2xl font-semibold mb-4">Editar Recepción de Inventario</h2>
+            <form id="edit-inventory-form">
+                <input type="hidden" id="edit-inventory-id">
+                <div class="modal-body p-2 space-y-4">
+                    <div>
+                        <label for="edit-reception-date" class="block text-sm font-medium text-gray-700">Fecha Recepción *</label>
+                        <input type="date" id="edit-reception-date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="edit-producer-name" class="block text-sm font-medium text-gray-700">Nombre Productor *</label>
+                        <input type="text" id="edit-producer-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="edit-description" class="block text-sm font-medium text-gray-700">Descripción (Lote, Especie, Variedad) *</label>
+                        <input type="text" id="edit-description" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="edit-net-weight" class="block text-sm font-medium text-gray-700">Stock (Kg) *</label>
+                        <input type="number" id="edit-net-weight" step="0.01" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <p class="mt-1 text-xs text-gray-500">Nota: Ajustar el stock aquí no afecta ventas pasadas. Use la anulación de ventas para eso.</p>
+                    </div>
+                </div>
+                <div class="mt-6 px-2 pb-2 text-right bg-gray-50 rounded-b-lg">
+                    <span id="edit-inventory-error" class="text-red-600 text-sm mr-4"></span>
+                    <button type="submit" id="save-edit-inventory-btn" class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación Genérico -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content max-w-md">
+            <h2 class="text-xl font-semibold mb-4" id="confirm-modal-title">¿Estás seguro?</h2>
+            <div class_="modal-body">
+                <p id="confirm-modal-body">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="mt-6 text-right space-x-3">
+                <button type="button" id="confirm-modal-cancel-btn" class="py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancelar
+                </button>
+                <button type="button" id="confirm-modal-ok-btn" class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Imports de Firebase (Módulos) -->
     <script type="module">
@@ -514,6 +594,19 @@
         const confirmAndSaveBtn = document.getElementById('confirm-and-save-btn');
         const invoiceConfirmError = document.getElementById('invoice-confirm-error');
 
+        // Elementos del Modal de Edición de Inventario
+        const editInventoryModal = document.getElementById('edit-inventory-modal');
+        const closeEditInventoryModalBtn = document.getElementById('close-edit-inventory-modal');
+        const editInventoryForm = document.getElementById('edit-inventory-form');
+        const editInventoryError = document.getElementById('edit-inventory-error');
+        
+        // Elementos del Modal de Confirmación
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmModalTitle = document.getElementById('confirm-modal-title');
+        const confirmModalBody = document.getElementById('confirm-modal-body');
+        const confirmModalCancelBtn = document.getElementById('confirm-modal-cancel-btn');
+        const confirmModalOkBtn = document.getElementById('confirm-modal-ok-btn');
+
         // Formateadores
         const { format: formatCurrency } = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
         const { format: formatNumber } = new Intl.NumberFormat('en-US');
@@ -524,6 +617,8 @@
             if (modalElement) {
                 console.log("Mostrando modal:", modalElement.id);
                 modalElement.style.display = 'block';
+                // Forzar repintado para que la transición funcione
+                setTimeout(() => modalElement.classList.add('show'), 10);
             } else {
                 console.error("Error: Elemento modal no encontrado.");
             }
@@ -532,10 +627,50 @@
         function closeModal(modalElement) {
             if (modalElement) {
                 console.log("Cerrando modal:", modalElement.id);
-                modalElement.style.display = 'none';
+                modalElement.classList.remove('show');
+                // Esperar a que termine la transición antes de ocultar
+                setTimeout(() => modalElement.style.display = 'none', 300); 
             } else {
                 console.error("Error: Elemento modal no encontrado.");
             }
+        }
+        
+        /**
+         * Muestra un modal de confirmación genérico.
+         * @param {string} title - El título del modal.
+         * @param {string} body - El mensaje del modal.
+         * @param {string} okButtonText - Texto para el botón de confirmación.
+         * @param {string} okButtonClass - Clases de Tailwind para el botón (ej. bg-red-600).
+         * @returns {Promise<boolean>} - Resuelve a 'true' si se confirma, 'false' si se cancela.
+         */
+        function showConfirmationModal(title, body, okButtonText = 'Confirmar', okButtonClass = 'bg-red-600 hover:bg-red-700') {
+            return new Promise((resolve) => {
+                confirmModalTitle.textContent = title;
+                confirmModalBody.textContent = body;
+                confirmModalOkBtn.textContent = okButtonText;
+                
+                // Limpiar clases antiguas y añadir la nueva
+                confirmModalOkBtn.className = `py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${okButtonClass}`;
+                
+                showModal(confirmModal);
+
+                // Remover listeners anteriores para evitar duplicados
+                const newOkBtn = confirmModalOkBtn.cloneNode(true);
+                confirmModalOkBtn.parentNode.replaceChild(newOkBtn, confirmModalOkBtn);
+                
+                const newCancelBtn = confirmModalCancelBtn.cloneNode(true);
+                confirmModalCancelBtn.parentNode.replaceChild(newCancelBtn, confirmModalCancelBtn);
+
+                // Asignar nuevos listeners
+                newOkBtn.addEventListener('click', () => {
+                    closeModal(confirmModal);
+                    resolve(true);
+                });
+                newCancelBtn.addEventListener('click', () => {
+                    closeModal(confirmModal);
+                    resolve(false);
+                });
+            });
         }
 
         // --- Lógica de Inicialización y Autenticación ---
@@ -623,7 +758,7 @@
                         console.error('Error de autenticación anónima:', anonError);
                         updateStatus('Error de autenticación. Revise la consola (F12).', 'error');
                     }
-                } else if (error.code === 'auth/operation-not-allowed') {
+                } else if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/configuration-not-found') {
                     // Error común si la autenticación anónima no está habilitada
                     console.error('La autenticación anónima no está habilitada en Firebase.');
                     updateStatus('Error: La autenticación anónima no está habilitada en Firebase.', 'error');
@@ -633,7 +768,7 @@
             }
         }
 
-        // --- Lógica de Recepción (Guardar Inventario) ---
+        // --- Lógica de Recepción (CRUD Inventario) ---
 
         // Renderizar tabla de inventario
         function renderInventory(docs) {
@@ -641,7 +776,7 @@
             localInventoryCache.clear(); // Limpiar cache local
 
             if (docs.empty) {
-                inventoryTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay materia prima en inventario.</td></tr>';
+                inventoryTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay materia prima en inventario.</td></tr>';
                 return;
             }
 
@@ -651,8 +786,8 @@
                 
                 // Guardar en cache
                 localInventoryCache.set(lotId, {
-                    description: item.description,
-                    stockKg: item.stockKg
+                    ...item, // Guardar el objeto completo
+                    id: lotId
                 });
 
                 const tr = document.createElement('tr');
@@ -662,7 +797,16 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.producer}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.description}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">${formatNumber(item.stockKg)} Kg</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button class="action-btn edit-btn" data-id="${lotId}">Editar</button>
+                        <button class="action-btn delete-btn" data-id="${lotId}">Borrar</button>
+                    </td>
                 `;
+                
+                // Asignar eventos a los botones
+                tr.querySelector('.edit-btn').addEventListener('click', () => openEditInventoryModal(lotId));
+                tr.querySelector('.delete-btn').addEventListener('click', () => handleDeleteInventory(lotId));
+                
                 inventoryTableBody.appendChild(tr);
             });
         }
@@ -686,11 +830,11 @@
                 updateInventorySelectors();
             }, (error) => {
                 console.error("Error al cargar inventario: ", error);
-                inventoryTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar inventario: ${error.message}</td></tr>`;
+                inventoryTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error al cargar inventario: ${error.message}</td></tr>`;
             });
         }
         
-        // Manejar envío de formulario de recepción
+        // Manejar envío de formulario de recepción (CREATE)
         async function handleReceptionSubmit(e) {
             e.preventDefault();
             if (!db || !userId) {
@@ -742,6 +886,97 @@
             }
         }
         
+        // Abrir modal de edición de inventario (READ)
+        function openEditInventoryModal(lotId) {
+            const item = localInventoryCache.get(lotId);
+            if (!item) {
+                alert("Error: No se pudo encontrar el item en la caché local.");
+                return;
+            }
+            
+            document.getElementById('edit-inventory-id').value = item.id;
+            document.getElementById('edit-reception-date').value = item.date;
+            document.getElementById('edit-producer-name').value = item.producer;
+            document.getElementById('edit-description').value = item.description;
+            document.getElementById('edit-net-weight').value = item.stockKg;
+            editInventoryError.textContent = '';
+            
+            showModal(editInventoryModal);
+        }
+        
+        // Guardar cambios de edición de inventario (UPDATE)
+        async function handleEditInventorySubmit(e) {
+            e.preventDefault();
+            const lotId = document.getElementById('edit-inventory-id').value;
+            if (!db || !userId || !lotId) {
+                editInventoryError.textContent = "Error: No hay conexión o ID de lote no válido.";
+                return;
+            }
+            
+            const submitButton = document.getElementById('save-edit-inventory-btn');
+            submitButton.disabled = true;
+            submitButton.textContent = "Guardando...";
+            editInventoryError.textContent = '';
+
+            try {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, lotId);
+                
+                const updatedData = {
+                    date: document.getElementById('edit-reception-date').value,
+                    producer: document.getElementById('edit-producer-name').value,
+                    description: document.getElementById('edit-description').value,
+                    stockKg: parseFloat(document.getElementById('edit-net-weight').value)
+                };
+                
+                if (!updatedData.date || !updatedData.producer || !updatedData.description || isNaN(updatedData.stockKg)) {
+                    throw new Error("Todos los campos son obligatorios y el stock debe ser un número.");
+                }
+
+                await updateDoc(docRef, updatedData);
+                
+                console.log("Inventario actualizado para Lote ID:", lotId);
+                closeModal(editInventoryModal);
+
+            } catch (error) {
+                console.error("Error al actualizar inventario:", error);
+                editInventoryError.textContent = `Error: ${error.message}`;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = "Guardar Cambios";
+            }
+        }
+        
+        // Manejar borrado de inventario (DELETE)
+        async function handleDeleteInventory(lotId) {
+            const confirmed = await showConfirmationModal(
+                '¿Borrar Recepción?',
+                `¿Estás seguro de que quieres borrar la recepción con Lote ID: ${lotId}? Esta acción no se puede deshacer.`,
+                'Sí, Borrar',
+                'bg-red-600 hover:bg-red-700'
+            );
+
+            if (!confirmed) return;
+            
+            if (!db || !userId) {
+                alert("Error: No hay conexión a la base de datos.");
+                return;
+            }
+
+            try {
+                // TODO: Añadir lógica para verificar si este lote está siendo usado en alguna venta.
+                // Por ahora, permitimos el borrado directo.
+                
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, lotId);
+                await deleteDoc(docRef);
+                
+                console.log("Lote de inventario borrado:", lotId);
+                
+            } catch (error) {
+                console.error("Error al borrar lote de inventario:", error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
         // --- Lógica de Venta (Modal y Factura) ---
 
         // Resetear y abrir el modal de venta
@@ -750,7 +985,10 @@
             // Poner valores por defecto
             document.getElementById('sale-customer').value = "Jacmor Farms";
             document.getElementById('sale-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('sale-invoice-id').value = "1"; // Debería ser autoincremental o basado en ventas
+            // Lógica simple para sugerir siguiente ID de factura
+            const lastSale = localSalesCache.length > 0 ? localSalesCache[localSalesCache.length - 1] : null;
+            const nextId = lastSale ? (parseInt(lastSale.invoiceId) || 0) + 1 : 1;
+            document.getElementById('sale-invoice-id').value = nextId;
             
             saleProductLines.innerHTML = '';
             saleInventoryLines.innerHTML = '';
@@ -811,7 +1049,9 @@
             }
             let options = '<option value="">Seleccione un lote...</option>';
             localInventoryCache.forEach((item, lotId) => {
-                options += `<option value="${lotId}">${item.description} (Stock: ${formatNumber(item.stockKg)} Kg)</option>`;
+                if (item.stockKg > 0) { // Solo mostrar lotes con stock
+                    options += `<option value="${lotId}">${item.description} (Stock: ${formatNumber(item.stockKg)} Kg)</option>`;
+                }
             });
             return options;
         }
@@ -1118,7 +1358,7 @@
         }
 
 
-        // --- Lógica de Resumen de Ventas y CSV ---
+        // --- Lógica de Resumen de Ventas (Anulación y CSV) ---
         
         let localSalesCache = []; // Cache local de ventas para CSV
 
@@ -1128,7 +1368,7 @@
             localSalesCache = []; // Limpiar cache local
 
             if (docs.empty) {
-                salesSummaryTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td></tr>';
+                salesSummaryTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td></tr>';
                 return;
             }
             
@@ -1137,6 +1377,9 @@
                 sales.push({ id: doc.id, ...doc.data() });
             });
             
+            // Ordenar por fecha o ID de factura (opcional pero útil)
+            sales.sort((a, b) => (a.invoiceId > b.invoiceId) ? 1 : -1);
+
             // Guardar en cache para CSV
             localSalesCache = sales;
 
@@ -1148,7 +1391,14 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.customer}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.productLines.length}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">${formatCurrency(sale.total)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="action-btn delete-btn" data-id="${sale.id}">Anular</button>
+                    </td>
                 `;
+                
+                // Asignar evento al botón de anular
+                tr.querySelector('.delete-btn').addEventListener('click', () => handleAnnulSale(sale.id, sale.invoiceId, sale.inventoryLines));
+                
                 salesSummaryTableBody.appendChild(tr);
             });
         }
@@ -1170,8 +1420,61 @@
                 renderSalesSummary(snapshot);
             }, (error) => {
                 console.error("Error al cargar resumen de ventas: ", error);
-                salesSummaryTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar ventas: ${error.message}</td></tr>`;
+                salesSummaryTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error al cargar ventas: ${error.message}</td></tr>`;
             });
+        }
+        
+        // Manejar Anulación de Venta (DELETE Venta, UPDATE Inventario)
+        async function handleAnnulSale(saleDocId, saleInvoiceId, inventoryLines) {
+            const confirmed = await showConfirmationModal(
+                '¿Anular Venta?',
+                `¿Estás seguro de anular la Factura #${saleInvoiceId}? Esta acción borrará la venta y DEVOLVERÁ el stock descontado al inventario.`,
+                'Sí, Anular Venta',
+                'bg-red-600 hover:bg-red-700'
+            );
+
+            if (!confirmed) return;
+            
+            if (!db || !userId) {
+                alert("Error: No hay conexión a la base de datos.");
+                return;
+            }
+            
+            console.log(`Anulando venta ${saleDocId}, devolviendo stock:`, inventoryLines);
+
+            try {
+                // Usar una transacción para asegurar que se borre la venta Y se devuelva el stock
+                await runTransaction(db, async (transaction) => {
+                    // 1. Referencia a la venta
+                    const saleDocRef = doc(db, `artifacts/${appId}/users/${userId}/sales`, saleDocId);
+                    
+                    // 2. Obtener y actualizar (restaurar) inventario
+                    for (const line of inventoryLines) {
+                        const invDocRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, line.lotId);
+                        const invDoc = await transaction.get(invDocRef);
+                        
+                        if (!invDoc.exists()) {
+                            // El lote fue borrado, no podemos devolver el stock. 
+                            // O podríamos recrearlo, pero por ahora solo logueamos el error.
+                            console.warn(`No se pudo devolver stock al lote ${line.lotId} porque no existe.`);
+                        } else {
+                            const currentStock = invDoc.data().stockKg;
+                            const newStock = currentStock + line.kgToDiscount;
+                            transaction.update(invDocRef, { stockKg: newStock });
+                            console.log(`Stock para ${line.lotId} restaurado de ${currentStock} a ${newStock}`);
+                        }
+                    }
+                    
+                    // 3. Borrar la venta
+                    transaction.delete(saleDocRef);
+                });
+                
+                console.log("Venta anulada y stock restaurado exitosamente.");
+
+            } catch (error) {
+                console.error("Error en la transacción de anulación:", error);
+                alert(`Error al anular la venta: ${error.message}`);
+            }
         }
         
         // Función para descargar CSV
@@ -1200,7 +1503,12 @@
                                     line.description.includes("Tango") ? "CITRUS Tango" : 
                                     line.description.includes("Cara") ? "CITRUS Cara" : "N/A";
                     const packaging = line.description;
-                    const pounds = (line.qty * parseFloat(line.description)) || 0; // Asumir que "2 lb" está en la desc
+                    
+                    // Intentar extraer el peso (ej: "2 lb") de la descripción
+                    const weightMatch = line.description.match(/(\d+(\.\d+)?)\s*lb/i);
+                    const lineWeight = weightMatch ? parseFloat(weightMatch[1]) : 0;
+                    
+                    const pounds = line.qty * lineWeight;
                     const boxes = line.qty;
                     const priceEach = line.price;
                     const amount = line.lineTotal;
@@ -1257,6 +1565,7 @@
         openSaleModalBtn.addEventListener('click', openSaleModal);
         closeSaleModalBtn.addEventListener('click', () => closeModal(saleModal));
         closeInvoiceModalBtn.addEventListener('click', () => closeModal(invoiceModal));
+        closeEditInventoryModalBtn.addEventListener('click', () => closeModal(editInventoryModal));
         
         // Botones del modal de venta
         addProductLineBtn.addEventListener('click', addProductLine);
@@ -1265,6 +1574,9 @@
         
         // Botón de confirmación (modal de factura)
         confirmAndSaveBtn.addEventListener('click', handleConfirmAndSaveSale);
+        
+        // Formulario de edición de inventario
+        editInventoryForm.addEventListener('submit', handleEditInventorySubmit);
 
         // Botón CSV
         downloadCsvBtn.addEventListener('click', downloadCSV);
@@ -1276,6 +1588,12 @@
             }
             if (event.target == invoiceModal) {
                 closeModal(invoiceModal);
+            }
+            if (event.target == editInventoryModal) {
+                closeModal(editInventoryModal);
+            }
+            if (event.target == confirmModal) {
+                closeModal(confirmModal);
             }
         }
         
