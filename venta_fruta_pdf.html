@@ -19,7 +19,8 @@
         }
         /* Estilos para la factura */
         #invoice-preview {
-            max-width: 750px;
+            /* AJUSTE: Reducido de 750px a 720px para caber en la hoja */
+            max-width: 720px; 
             width: 100%;
             margin: 0 auto;
             border: 1px solid #ddd;
@@ -380,7 +381,8 @@
             <span id="close-invoice-modal" class="modal-close">&times;</span>
             <div class="modal-body" id="invoice-modal-body">
                 <!-- Contenido de la factura (invoice-preview) se inyecta aquí -->
-                <div id="invoice-preview" class="p-4 sm:p-6">
+                <!-- AJUSTE: Se quitó el padding de aquí (p-4 sm:p-6) -->
+                <div id="invoice-preview">
                     <!-- Cabecera -->
                     <div class="invoice-header">
                         <div class="company-details">
@@ -1351,8 +1353,9 @@
             
             // Clonar el elemento para asegurar que el estilo sea correcto para el PDF
             const elementToPrint = element.cloneNode(true);
-            elementToPrint.style.maxWidth = '7.5in'; // Ancho de hoja carta (8.5) menos márgenes (1.0)
-            elementToPrint.style.padding = '0'; // Padding ya está en el contenedor de PDF
+            // AJUSTE: El ancho máximo ya está en el CSS, pero lo forzamos aquí también
+            elementToPrint.style.maxWidth = '7.5in'; // 8.5 (hoja) - 1.0 (márgenes 0.5 + 0.5)
+            elementToPrint.style.padding = '0'; 
             elementToPrint.style.boxShadow = 'none';
             elementToPrint.style.border = 'none';
 
