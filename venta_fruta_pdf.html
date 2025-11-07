@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Carga html2pdf.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" 
-            xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" 
+            integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" 
             crossorigin="anonymous" 
             referrerpolicy="no-referrer"></script>
             
@@ -509,7 +509,7 @@
     <div id="confirm-modal" class="modal">
         <div class="modal-content max-w-md">
             <h2 class="text-xl font-semibold mb-4" id="confirm-modal-title">¿Estás seguro?</h2>
-            <div class_="modal-body">
+            <div class="modal-body">
                 <p id="confirm-modal-body">Esta acción no se puede deshacer.</p>
             </div>
             <div class="mt-6 text-right space-x-3">
@@ -813,23 +813,27 @@
         
         // Cargar inventario (con listener en tiempo real)
         function loadInventory() {
-            if (!db || !userId) return;
+            if (!db || !userId) return; // Esperar a que la autenticación esté lista
 
             // Desconectar listener anterior si existe
             if (inventoryListener) inventoryListener();
 
-            const inventoryCollectionPath = `artifacts/${appId}/users/${userId}/inventory`;
+            // *** CAMBIO A RUTA PÚBLICA ***
+            const inventoryCollectionPath = `artifacts/${appId}/public/inventory`;
             const q = query(collection(db, inventoryCollectionPath));
 
-            console.log("Escuchando en:", inventoryCollectionPath);
+            console.log("Escuchando en RUTA PÚBLICA:", inventoryCollectionPath);
 
             inventoryListener = onSnapshot(q, (snapshot) => {
-                console.log("Inventario actualizado, docs:", snapshot.size);
+                console.log("Inventario (público) actualizado, docs:", snapshot.size);
                 renderInventory(snapshot);
                 // Actualizar los selectores en el modal de venta si está abierto
                 updateInventorySelectors();
             }, (error) => {
-                console.error("Error al cargar inventario: ", error);
+                console.error("Error al cargar inventario (público): ", error);
+                if (error.code === 'permission-denied') {
+                    updateStatus('Error: Permisos denegados. Revise las Reglas de Firestore.', 'error');
+                }
                 inventoryTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error al cargar inventario: ${error.message}</td></tr>`;
             });
         }
@@ -865,11 +869,12 @@
                     stockKg: netWeight,
                     createdAt: serverTimestamp() 
                 };
-
-                const inventoryCollectionPath = `artifacts/${appId}/users/${userId}/inventory`;
+                
+                // *** CAMBIO A RUTA PÚBLICA ***
+                const inventoryCollectionPath = `artifacts/${appId}/public/inventory`;
                 const docRef = await addDoc(collection(db, inventoryCollectionPath), docData);
 
-                console.log("Recepción guardada con ID: ", docRef.id);
+                console.log("Recepción pública guardada con ID: ", docRef.id);
                 receptionForm.reset(); // Limpiar formulario
                 // Restaurar valores por defecto
                 document.getElementById('producer-name').value = "Pinebloom";
@@ -919,7 +924,8 @@
             editInventoryError.textContent = '';
 
             try {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, lotId);
+                // *** CAMBIO A RUTA PÚBLICA ***
+                const docRef = doc(db, `artifacts/${appId}/public/inventory`, lotId);
                 
                 const updatedData = {
                     date: document.getElementById('edit-reception-date').value,
@@ -934,7 +940,7 @@
 
                 await updateDoc(docRef, updatedData);
                 
-                console.log("Inventario actualizado para Lote ID:", lotId);
+                console.log("Inventario (público) actualizado para Lote ID:", lotId);
                 closeModal(editInventoryModal);
 
             } catch (error) {
@@ -966,10 +972,11 @@
                 // TODO: Añadir lógica para verificar si este lote está siendo usado en alguna venta.
                 // Por ahora, permitimos el borrado directo.
                 
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, lotId);
+                // *** CAMBIO A RUTA PÚBLICA ***
+                const docRef = doc(db, `artifacts/${appId}/public/inventory`, lotId);
                 await deleteDoc(docRef);
                 
-                console.log("Lote de inventario borrado:", lotId);
+                console.log("Lote de inventario (público) borrado:", lotId);
                 
             } catch (error) {
                 console.error("Error al borrar lote de inventario:", error);
@@ -1273,7 +1280,8 @@
                     
                     // 1. Obtener todos los documentos de inventario necesarios
                     for (const line of currentSaleData.inventoryLines) {
-                        const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, line.lotId);
+                        // *** CAMBIO A RUTA PÚBLICA ***
+                        const docRef = doc(db, `artifacts/${appId}/public/inventory`, line.lotId);
                         inventoryRefs.set(line.lotId, docRef);
                         const invDoc = await transaction.get(docRef);
                         if (!invDoc.exists()) {
@@ -1304,11 +1312,12 @@
                         ...currentSaleData,
                         createdAt: serverTimestamp()
                     };
-                    const salesCollectionPath = `artifacts/${appId}/users/${userId}/sales`;
+                    // *** CAMBIO A RUTA PÚBLICA ***
+                    const salesCollectionPath = `artifacts/${appId}/public/sales`;
                     const newSaleRef = doc(collection(db, salesCollectionPath)); // Crear referencia para obtener ID
                     transaction.set(newSaleRef, saleDocData);
                     
-                    console.log("Transacción exitosa. Venta guardada con ID:", newSaleRef.id);
+                    console.log("Transacción (pública) exitosa. Venta guardada con ID:", newSaleRef.id);
                     // Actualizar el ID de factura para el PDF
                     currentSaleData.generatedSaleId = newSaleRef.id;
                 });
@@ -1409,17 +1418,18 @@
 
             // Desconectar listener anterior si existe
             if (salesListener) salesListener();
-
-            const salesCollectionPath = `artifacts/${appId}/users/${userId}/sales`;
+            
+            // *** CAMBIO A RUTA PÚBLICA ***
+            const salesCollectionPath = `artifacts/${appId}/public/sales`;
             const q = query(collection(db, salesCollectionPath));
 
-            console.log("Escuchando ventas en:", salesCollectionPath);
+            console.log("Escuchando ventas en RUTA PÚBLICA:", salesCollectionPath);
 
             salesListener = onSnapshot(q, (snapshot) => {
-                console.log("Resumen de ventas actualizado, docs:", snapshot.size);
+                console.log("Resumen de ventas (público) actualizado, docs:", snapshot.size);
                 renderSalesSummary(snapshot);
             }, (error) => {
-                console.error("Error al cargar resumen de ventas: ", error);
+                console.error("Error al cargar resumen de ventas (público): ", error);
                 salesSummaryTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error al cargar ventas: ${error.message}</td></tr>`;
             });
         }
@@ -1446,11 +1456,13 @@
                 // Usar una transacción para asegurar que se borre la venta Y se devuelva el stock
                 await runTransaction(db, async (transaction) => {
                     // 1. Referencia a la venta
-                    const saleDocRef = doc(db, `artifacts/${appId}/users/${userId}/sales`, saleDocId);
+                    // *** CAMBIO A RUTA PÚBLICA ***
+                    const saleDocRef = doc(db, `artifacts/${appId}/public/sales`, saleDocId);
                     
                     // 2. Obtener y actualizar (restaurar) inventario
                     for (const line of inventoryLines) {
-                        const invDocRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, line.lotId);
+                        // *** CAMBIO A RUTA PÚBLICA ***
+                        const invDocRef = doc(db, `artifacts/${appId}/public/inventory`, line.lotId);
                         const invDoc = await transaction.get(invDocRef);
                         
                         if (!invDoc.exists()) {
