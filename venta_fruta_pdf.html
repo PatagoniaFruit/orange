@@ -818,8 +818,8 @@
             // Desconectar listener anterior si existe
             if (inventoryListener) inventoryListener();
 
-            // *** CAMBIO A RUTA PÚBLICA ***
-            const inventoryCollectionPath = `artifacts/${appId}/public/inventory`;
+            // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+            const inventoryCollectionPath = `artifacts/${appId}/public/data/inventory`;
             const q = query(collection(db, inventoryCollectionPath));
 
             console.log("Escuchando en RUTA PÚBLICA:", inventoryCollectionPath);
@@ -870,8 +870,8 @@
                     createdAt: serverTimestamp() 
                 };
                 
-                // *** CAMBIO A RUTA PÚBLICA ***
-                const inventoryCollectionPath = `artifacts/${appId}/public/inventory`;
+                // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                const inventoryCollectionPath = `artifacts/${appId}/public/data/inventory`;
                 const docRef = await addDoc(collection(db, inventoryCollectionPath), docData);
 
                 console.log("Recepción pública guardada con ID: ", docRef.id);
@@ -924,8 +924,8 @@
             editInventoryError.textContent = '';
 
             try {
-                // *** CAMBIO A RUTA PÚBLICA ***
-                const docRef = doc(db, `artifacts/${appId}/public/inventory`, lotId);
+                // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                const docRef = doc(db, `artifacts/${appId}/public/data/inventory`, lotId);
                 
                 const updatedData = {
                     date: document.getElementById('edit-reception-date').value,
@@ -972,8 +972,8 @@
                 // TODO: Añadir lógica para verificar si este lote está siendo usado en alguna venta.
                 // Por ahora, permitimos el borrado directo.
                 
-                // *** CAMBIO A RUTA PÚBLICA ***
-                const docRef = doc(db, `artifacts/${appId}/public/inventory`, lotId);
+                // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                const docRef = doc(db, `artifacts/${appId}/public/data/inventory`, lotId);
                 await deleteDoc(docRef);
                 
                 console.log("Lote de inventario (público) borrado:", lotId);
@@ -1280,8 +1280,8 @@
                     
                     // 1. Obtener todos los documentos de inventario necesarios
                     for (const line of currentSaleData.inventoryLines) {
-                        // *** CAMBIO A RUTA PÚBLICA ***
-                        const docRef = doc(db, `artifacts/${appId}/public/inventory`, line.lotId);
+                        // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                        const docRef = doc(db, `artifacts/${appId}/public/data/inventory`, line.lotId);
                         inventoryRefs.set(line.lotId, docRef);
                         const invDoc = await transaction.get(docRef);
                         if (!invDoc.exists()) {
@@ -1312,8 +1312,8 @@
                         ...currentSaleData,
                         createdAt: serverTimestamp()
                     };
-                    // *** CAMBIO A RUTA PÚBLICA ***
-                    const salesCollectionPath = `artifacts/${appId}/public/sales`;
+                    // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                    const salesCollectionPath = `artifacts/${appId}/public/data/sales`;
                     const newSaleRef = doc(collection(db, salesCollectionPath)); // Crear referencia para obtener ID
                     transaction.set(newSaleRef, saleDocData);
                     
@@ -1419,8 +1419,8 @@
             // Desconectar listener anterior si existe
             if (salesListener) salesListener();
             
-            // *** CAMBIO A RUTA PÚBLICA ***
-            const salesCollectionPath = `artifacts/${appId}/public/sales`;
+            // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+            const salesCollectionPath = `artifacts/${appId}/public/data/sales`;
             const q = query(collection(db, salesCollectionPath));
 
             console.log("Escuchando ventas en RUTA PÚBLICA:", salesCollectionPath);
@@ -1456,13 +1456,13 @@
                 // Usar una transacción para asegurar que se borre la venta Y se devuelva el stock
                 await runTransaction(db, async (transaction) => {
                     // 1. Referencia a la venta
-                    // *** CAMBIO A RUTA PÚBLICA ***
-                    const saleDocRef = doc(db, `artifacts/${appId}/public/sales`, saleDocId);
+                    // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                    const saleDocRef = doc(db, `artifacts/${appId}/public/data/sales`, saleDocId);
                     
                     // 2. Obtener y actualizar (restaurar) inventario
                     for (const line of inventoryLines) {
-                        // *** CAMBIO A RUTA PÚBLICA ***
-                        const invDocRef = doc(db, `artifacts/${appId}/public/inventory`, line.lotId);
+                        // *** RUTA PÚBLICA CORREGIDA (5 SEGMENTOS) ***
+                        const invDocRef = doc(db, `artifacts/${appId}/public/data/inventory`, line.lotId);
                         const invDoc = await transaction.get(invDocRef);
                         
                         if (!invDoc.exists()) {
